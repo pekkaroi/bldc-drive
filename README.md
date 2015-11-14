@@ -1,5 +1,4 @@
 # bldc-drive
-Cheap and simple brushless DC servo driver designed for CNC applications using STM32 microcontroller
 
 This is a project developing a simple BLDC servo controller. It is based on an STM32F103 microcontroller.
 ##Firmware
