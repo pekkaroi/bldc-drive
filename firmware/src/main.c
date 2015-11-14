@@ -1,13 +1,27 @@
-//
-// This file is part of the GNU ARM Eclipse distribution.
-// Copyright (c) 2014 Liviu Ionescu.
-//
+/*
+ 	bldc-drive Cheap and simple brushless DC motor driver designed for CNC applications using STM32 microcontroller.
+	Copyright (C) 2015 Pekka Roivainen
 
-// ----------------------------------------------------------------------------
+	This program is free software; you can redistribute it and/or
+	modify it under the terms of the GNU General Public License
+	as published by the Free Software Foundation; either version 2
+	of the License, or (at your option) any later version.
+
+	This program is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+
+	You should have received a copy of the GNU General Public License
+	along with this program; if not, write to the Free Software
+	Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
-#include "diag/Trace.h"
+
 #include <stm32f10x_gpio.h>
 #include <stm32f10x_tim.h>
 #include <stm32f10x_rcc.h>
@@ -82,7 +96,7 @@ main()
 		pwm_motorStart();
 		ENABLE_LED_ON;
 	}
-  // Infinite loop
+
   while (1)
     {
 	  getEncoderCount();
@@ -100,19 +114,7 @@ main()
 	  if(s.inputMethod==inputMethod_stepDir)
 		  updatePid();
 
-
-
-
-       // Add your code here.
     }
 }
 
 
-
-
-
-
-
-#pragma GCC diagnostic pop
-
-// ----------------------------------------------------------------------------
