@@ -1,0 +1,24 @@
+# bldc-drive
+Cheap and simple brushless DC servo driver designed for CNC applications using STM32 microcontroller
+
+This is a project developing a simple BLDC servo controller. It is based on an STM32F103 microcontroller.
+##Firmware
+Firmware is a work-in-progress (and will be for a while :), however following features are included:
+* Trapezoidal BLDC commutation using either HALL sensors or quadrature encoder.
+* Step+Dir input interface with PID position control loop.
+* PWM+Dir input interface in velocity mode.
+* USART communitacation for configuration. Configuration settings saved to flash memory.
+
+###ToDo:
+* ADC current limiting. Hardware support is there, and initial ADC functionality is in firmware, but needs finalization.
+
+##Hardware:
+First prototype hardware is built and it is working well. However, there are couple of known issues:
+* 6n137 optocoupler is not officially supporting 3.3V supply voltage which is used in the board. In reality they seem to work, but the optocoupler should be changed or additional levelshifting circuitry added on next revision.
+* Few connectors in the layout missed solder stop openings. They were bit painfull to solder. :)
+
+
+
+
+
+
