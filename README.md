@@ -1,6 +1,10 @@
 # bldc-drive
 
 This is a project developing a simple BLDC servo controller. It is based on an STM32F103 microcontroller.
+
+Some parts, especially the PID control loop is based on development done by user mcm_xyz in cnczone.com forum. Thank you! Check the thread http://www.cnczone.com/forums/open-source-controller-boards/283428-cnc.html 
+
+
 ##Firmware
 Firmware is a work-in-progress (and will be for a while :), however following features are included:
 * Trapezoidal BLDC commutation using either HALL sensors or quadrature encoder.
