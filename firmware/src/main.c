@@ -83,7 +83,7 @@ main()
 		initPid();
 	}
 	initLeds();
-	errorInCommutation=1;
+//	errorInCommutation=1;
 	uint8_t ena;
 	//check if ENA is on already at start. If it is, start motor.
 #if ENA_POLARITY == 1
@@ -96,25 +96,33 @@ main()
 		pwm_motorStart();
 		ENABLE_LED_ON;
 	}
+	//two different types of main loops depending on commutation method
+	if(s.commutationMethod == commutationMethod_Encoder)
+	{
+		while (1)
+		{
 
-  while (1)
-    {
-	  getEncoderCount();
-	  if(s.commutationMethod == commutationMethod_Encoder)
-	  {
-		  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
-		  {
-			  //usart_sendStr("commutation to ");
-			  //usart_sendChar(encoder_commutation_table[encoder_shaft_pos]+48);
-			  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
-			  pwm_Commute(encoder_commutation_pos);
-			//  usart_sendStr("\n\r");
-		  }
-	  }
-	  if(s.inputMethod==inputMethod_stepDir)
-		  updatePid();
+
+			  getEncoderCount();
+			  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
+			  {
+				  //usart_sendStr("commutation to ");
+				  //usart_sendChar(encoder_commutation_table[encoder_shaft_pos]+48);
+				  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
+				  pwm_Commute(encoder_commutation_pos);
+				//  usart_sendStr("\n\r");
+			  }
+		}
 
     }
+	else
+	{
+		while(1)
+		{
+
+		}
+	}
+
 }
 
 

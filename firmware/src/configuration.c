@@ -22,32 +22,41 @@
 #include "eeprom.h"
 #include "usart.h"
 #include <string.h>
+#include <stdio.h>
 #define EADDR_IS_INITIALIZED 0x0001
 #define EADDR_CONFIG_START 0x0002
 
 void writeConfig()
 {
-	FLASH_Unlock();
+
+
 
 	uint16_t i;
 	int16_t *ptr = (int16_t *)&s;
 	for(i=0; i<sizeof(servoConfig)/2;i++)
 	{
-		EE_WriteVariable(EADDR_CONFIG_START+i, *ptr);
+		if(EE_WriteVariable(EADDR_CONFIG_START+i, *ptr)!=FLASH_COMPLETE)
+		{
+			usart_sendStr("Flash Error\n\r");
+		}
 		ptr++;
 	}
+
+
 }
 void getConfig()
 {
-	uint16_t i;
-	uint16_t tmp[20];
-	uint16_t *ptr;
+	FLASH_Unlock();
 
+	uint16_t i;
+
+	uint16_t *ptr;
+	EE_Init();
 	EE_ReadVariable(EADDR_IS_INITIALIZED,&i);
 	if(i != 0x5253)
 	{
 		//empty or corrupted EEPROM detected: write default config
-		EE_Format();
+		//EE_Format();
 		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5253);
 		s.commutationMethod = commutationMethod_HALL;
 		s.inputMethod = inputMethod_stepDir;
@@ -66,7 +75,8 @@ void getConfig()
 	for(i=0; i<sizeof(servoConfig)/2;i++)
 	{
 
-		EE_ReadVariable(EADDR_CONFIG_START+i, ptr);
+		if(EE_ReadVariable(EADDR_CONFIG_START+i, ptr)!=0)
+			usart_sendStr("Flash Error\n\r");
 		ptr++;
 	}
 
@@ -79,7 +89,7 @@ void setConfig(char* param, int16_t value)
 	if (strstr( param, "commutationMethod" ) != NULL)
 	{
 		s.commutationMethod = (uint16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		//this is taken into account on next boot
 		usart_sendStr("SET commutationMethod to ");
@@ -89,7 +99,7 @@ void setConfig(char* param, int16_t value)
 	if (strstr( param, "inputMethod" ) != NULL)
 	{
 		s.inputMethod = (uint16_t)value;
-		writeConfig();
+		//writeConfig();
 		//this is taken into account on next boot
 
 		usart_sendStr("SET OK");
@@ -98,49 +108,49 @@ void setConfig(char* param, int16_t value)
 	{
 		s.encoder_PPR = (uint16_t)value;
 
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "encoder_poles" ) != NULL)
 	{
 		s.encoder_poles = (uint16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "encoder_counts_per_step" ) != NULL)
 	{
 		s.encoder_counts_per_step = (uint16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "pid_Kp" ) != NULL)
 	{
 		s.pid_Kp = (int16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "pid_Ki" ) != NULL)
 	{
 		s.pid_Ki = (int16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "pid_Kd" ) != NULL)
 	{
 		s.pid_Kd = (int16_t)value;
-		writeConfig();
+		//writeConfig();
 
 		usart_sendStr("SET OK");
 	}
 	if (strstr( param, "usart_baud" ) != NULL)
 	{
 		s.usart_baud = (uint16_t)value;
-		writeConfig();
+		//writeConfig();
 		//this is taken into account on next boot
 		usart_sendStr("SET OK");
 	}

@@ -2,6 +2,8 @@
  	bldc-drive Cheap and simple brushless DC motor driver designed for CNC applications using STM32 microcontroller.
 	Copyright (C) 2015 Pekka Roivainen
 
+	Original PWM commutation tables and ideas on PWM commutation from a great article in http://www.mikrocontroller.net/articles/STM32_BLDC_Control_with_HALL_Sensor
+
 	This program is free software; you can redistribute it and/or
 	modify it under the terms of the GNU General Public License
 	as published by the Free Software Foundation; either version 2
@@ -52,7 +54,7 @@ static const uint8_t BLDC_BRIDGE_STATE_VORWARD[8][6] =   // Motor step
    { FALSE,FALSE, TRUE,FALSE, FALSE,TRUE },
    { FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  // 0 //111
 };
-
+/*
 static const uint8_t BLDC_BRIDGE_STATE_VORWARD2[8][6] =   // Motor step
 {
 { FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  //  //000
@@ -78,6 +80,7 @@ static const uint8_t BLDC_BRIDGE_STATE_BACKWARD2[8][6] =   // Motor step
 
 { FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  // 0 //111
 };
+*/
 void UpdatePWMChannels(uint8_t BL1,uint8_t BL2,uint8_t BL3,uint8_t BH1,uint8_t BH2,uint8_t BH3);
 void initPWM()
 
@@ -219,6 +222,8 @@ void pwm_InitialBLDCCommutation()
 		//this function is called when forced commutation is required, eg when starting or when anomalies are detected.
 		newhallpos = ((GPIO_ReadInputData(GPIOB)>>6) & 0x0007);
 		hallpos = newhallpos;
+		pwm_Commute(hallpos);
+		return;
 
 	}
 	else
@@ -228,7 +233,6 @@ void pwm_InitialBLDCCommutation()
 		return;
 	}
 
-	pwm_Commute(hallpos);
 
 
 }
@@ -264,7 +268,7 @@ void pwm_Commute(uint8_t comm_pos)
 }
 void UpdatePWMChannels(uint8_t BL1,uint8_t BL2,uint8_t BL3,uint8_t BH1,uint8_t BH2,uint8_t BH3)
 {
-
+//THIS NEEDS OPTIMIZATION!
 	#define DRIVEMODE 1
 #if DRIVEMODE==1
 	// **** this is with active freewheeling ****

@@ -21,6 +21,7 @@
 */
 
 #include <stm32f10x_gpio.h>
+#include <stdlib.h>
 #include "pid.h"
 #include "pwm.h"
 #include "hall.h"
@@ -35,8 +36,27 @@ void initPid()
 	pid_integrated_error = 0;
 	pid_prev_position_error =0;
 
+	//TIM3 used for pid loop timing.
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
+	TIM_TimeBaseStructure.TIM_Prescaler = 72; //1MHz counter
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseStructure.TIM_Period = 250; //4kHz update interval
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+	TIM_ITConfig(TIM3, TIM_IT_Update, ENABLE);
+	TIM_Cmd(TIM3, ENABLE);
+
+	NVIC_InitTypeDef NVIC_InitStructure;
+	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x02;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
 
 }
+//This is called from TIM3 update interrupt. defined in input.c
 void updatePid()
 {
 	int32_t position_error;
@@ -44,12 +64,14 @@ void updatePid()
 	static uint8_t prevdir;
 	if (!motor_running)
 	{
-		return;
 		pid_integrated_error=0;
+		return;
+
 
 
 	}
-	//PID_Frequency_Pulse++;
+	getEncoderCount();
+
 
 	position_error = encoder_count - pid_requested_position;
 	abs_position_error = abs(position_error);
@@ -75,7 +97,7 @@ void updatePid()
 	output += (position_error - pid_prev_position_error) * s.pid_Kd;
 	pid_prev_position_error = position_error;
 
-	//Output /= 10; // to be decided...
+	output /= 100; //provide larger dynamic range for pid. (without this, having pid_Ki = 1 was enough for oscillation.
 
     //limit output power
 	if (output > MAX_DUTY)
@@ -94,8 +116,9 @@ void updatePid()
 	if(dir!=prevdir)
 	{
 		pwm_InitialBLDCCommutation();
+		prevdir=dir;
 	}
-	prevdir=dir;
+
 	pwm_setDutyCycle(abs(output));
 
 

@@ -32,11 +32,11 @@
 
 
 uint16_t encoder_lastCount;
-uint16_t findNextEncoderCommutationCNT(int8_t dir);
+//uint16_t findNextEncoderCommutationCNT(int8_t dir);
 void buildCommutationTable()
 {
 	uint16_t i;
-	char buf[10];
+	//char buf[10];
 	for(i=0;i<s.encoder_PPR;i++)
 	{
 		encoder_commutation_table[i] = commutation_sequence[(i*s.encoder_poles*6/s.encoder_PPR) % 6];

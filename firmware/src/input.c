@@ -143,10 +143,10 @@ void EXTI9_5_IRQHandler()
 #endif
 		if(idir)
 		{
-			pid_requested_position+=10;
+			pid_requested_position+=s.encoder_counts_per_step;
 		}
 		else
-			pid_requested_position-=10;
+			pid_requested_position-=s.encoder_counts_per_step;
 		EXTI_ClearITPendingBit(EXTI_Line6);
 	}
 
@@ -175,6 +175,21 @@ void initPWMInput()
 	GPIO_InitStructure.GPIO_Mode = GPIO_Mode_IPD;
 	GPIO_Init(GPIOA, &GPIO_InitStructure);
 
+	EXTI_InitTypeDef EXTI_initStructure;
+	EXTI_initStructure.EXTI_Line = EXTI_Line5;
+	EXTI_initStructure.EXTI_Mode = EXTI_Mode_Interrupt;
+	EXTI_initStructure.EXTI_Trigger = EXTI_Trigger_Rising_Falling;
+	EXTI_initStructure.EXTI_LineCmd = ENABLE;
+	EXTI_Init(&EXTI_initStructure);
+
+	NVIC_InitTypeDef nvicStructure;
+	nvicStructure.NVIC_IRQChannel = EXTI9_5_IRQn;
+	nvicStructure.NVIC_IRQChannelPreemptionPriority = 0;
+	nvicStructure.NVIC_IRQChannelSubPriority = 2;
+	nvicStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&nvicStructure);
+
+
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	TIM_TimeBaseStructInit(&TIM_TimeBaseStructure);
@@ -188,8 +203,11 @@ void initPWMInput()
 
 
 	TIM_ICInitTypeDef TIM_ICInit;
-
+#if STEP_POLARITY == 1
 	TIM_ICInit.TIM_ICPolarity = TIM_ICPolarity_Rising;
+#else
+	TIM_ICInit.TIM_ICPolarity = TIM_ICPolarity_Falling;
+#endif
 	TIM_ICInit.TIM_ICFilter = 5;
 	TIM_ICInit.TIM_Channel = TIM_Channel_1;
 	TIM_ICInit.TIM_ICPrescaler = TIM_ICPSC_DIV1;
@@ -213,16 +231,38 @@ void initPWMInput()
 
 
 void TIM3_IRQHandler(void) {
+  if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
+  {
+	if(s.inputMethod==inputMethod_stepDir)
+	{
+	  updatePid();
+	  TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+	}
+	else
+	{
+		updateCtr++;
+		if(updateCtr>50)
+		{
+			 //pwm_motorStop();
+			 //ERROR_LED_ON;
+
+		}
+
+	}
+
+  }
   if (TIM_GetITStatus(TIM3, TIM_IT_CC1) != RESET)
   {
-	//  TM_GPIO_TogglePinValue(GPIOA, GPIO_Pin_12);
 
-	// calculate motor  speed or else with CCR1 values
 	uint16_t tim3_dc = TIM3->CCR2;
 	uint16_t tim3_per = TIM3->CCR1;
 	static uint8_t prevdir;
 	uint16_t DC;
-	dir = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7);
+#if DIR_POLARITY == 1
+		dir = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7);
+#else
+		dir = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7)))&1;
+#endif
 	if(dir!=prevdir)
 	{
 
@@ -250,15 +290,8 @@ void TIM3_IRQHandler(void) {
   }
   else if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
   {
+	//if PWM signal is lost for some reason, stop motor
 
-	updateCtr++;
-	if(updateCtr>50)
-	{
-		motor_running=0;
-		TIM1->CCR1 = 0;
-		TIM1->CCR2 = 0;
-		TIM1->CCR3 = 0;
-	}
 	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 
   }

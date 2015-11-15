@@ -41,5 +41,6 @@ volatile uint16_t motor_running;
 
 void initStepDirInput();
 void initPWMInput();
+void initLeds();
 
 #endif /* INPUT_H_ */

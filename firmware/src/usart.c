@@ -21,6 +21,8 @@
 #include <stm32f10x_usart.h>
 #include <stm32f10x_rcc.h>
 #include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "usart.h"
 #include "pid.h"
 #include "pwm.h"
@@ -29,7 +31,7 @@
 #include "hall.h"
 #include "configuration.h"
 char recvbuffer[255];
-char recvctr;
+uint8_t recvctr;
 void initUSART(uint16_t baud)
 {
 	recvctr=0;
@@ -112,23 +114,35 @@ void usart_sendStr(char *str)
 void parseUsart()
 {
 	const char delimiters[] = " ";
-	char *token;
+
 	char *param;
 	char *value;
 	if(strstr(recvbuffer, "SET")!=NULL)
 	{
-	  token = strtok(recvbuffer,delimiters); //first param
+	  strtok(recvbuffer,delimiters); //first param
 	  param = strtok(NULL,delimiters);
 	  value = strtok(NULL,delimiters);
 	  if(param!=NULL && value!=NULL)
 		  setConfig(param,atoi(value));
 
 	}
+	if(strstr(recvbuffer, "SAVE")!=NULL)
+	{
+		usart_sendStr("Saving:\n\r");
+		printConfiguration();
+		writeConfig(s);
+		usart_sendStr("SAVE OK\n\r");
+	}
+	if(strstr(recvbuffer, "GET")!=NULL)
+	{
+		getConfig();
+		printConfiguration();
+	}
 	//too empty message for anything. Send status
 	if(recvctr < 3)
 	{
 		char buf[100];
-		sprintf(buf, "Count: %d, Hall: %d, ADC: %d\n\r",encoder_count, hallpos, ADC_value);
+		sprintf(buf, "Count: %d, Hall: %d, ADC: %d\n\r",(int)encoder_count, (int)hallpos, (int)ADC_value);
 
 		usart_sendStr(buf);
 	}
