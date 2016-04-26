@@ -17,7 +17,7 @@ Firmware is a work-in-progress (and will be for a while :), however following fe
 
 ##Hardware:
 First prototype hardware is built and it is working well. However, there are couple of known issues:
-* 6n137 optocoupler is not officially supporting 3.3V supply voltage which is used in the board. In reality they seem to work, but the optocoupler should be changed or additional levelshifting circuitry added on next revision.
+* 6n137 optocoupler is not officially supporting 3.3V supply voltage which is used in the board. In reality they seem to work, but the optocoupler should be changed or additional levelshifting circuitry added on next revision. Also, the optocoupler input circuit supports only push-pull-type encoder output. Many encoders seem to have open drain output. :(
 * Few connectors in the layout missed solder stop openings. They were bit painfull to solder. :)
 
 
