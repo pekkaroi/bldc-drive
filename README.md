@@ -27,7 +27,7 @@ First prototype hardware is built and it is working well. However, there are cou
 * Few connectors in the layout missed solder stop openings. They were bit painfull to solder. :)
 * The current amplifier INA27x connection is wrong. The IN+ and IN- should be swapped.
 
-Second hardware revision has been done with the above findings fixed. I'll publish it when I get them and verify they work to some extent.
+Second hardware revision has been sent to PCB fab with the above findings fixed. I'll publish the PCBs when I get them and verify they work at least to some extent.
 
 
 
