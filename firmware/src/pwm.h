@@ -23,7 +23,7 @@
 #define BLDC_CHOPPER_PERIOD 4000
 #define MAX_DUTY 3950 //100% duty not allowed to allow recharge of high side gate drivers
 #define BLDC_NOL 7 //Non-OverLapping, number of clock cycles
-#define BLDC_DELAY 30 //Commutation delay. 1= no delay, 2000=7ms.
+#define BLDC_DELAY 100 //Commutation delay. 1= no delay, 2000=7ms.
 
 
 static const uint8_t commutation_sequence[6] = {1,3,2,6,4,5};//{001,011,010,110,100,101}

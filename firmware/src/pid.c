@@ -59,9 +59,12 @@ void initPid()
 //This is called from TIM3 update interrupt. defined in input.c
 void updatePid()
 {
-	int32_t position_error;
+
 	uint32_t abs_position_error;
+	int32_t position_delta;
+	int32_t position_delta_delta;
 	static uint8_t prevdir;
+	getEncoderCount();
 	if (!motor_running)
 	{
 		pid_integrated_error=0;
@@ -70,10 +73,20 @@ void updatePid()
 
 
 	}
-	getEncoderCount();
+
 
 
 	position_error = encoder_count - pid_requested_position;
+
+	position_delta= pid_requested_position - pid_last_requested_position;
+	position_delta_delta = position_delta - pid_last_requested_position_delta;
+
+	pid_last_requested_position = pid_requested_position;
+	pid_last_requested_position_delta = position_delta;
+
+	if(abs(position_error)> max_error)
+			max_error = abs(position_error);
+
 	abs_position_error = abs(position_error);
 
 	if (abs_position_error > pid_max_pos_error)
@@ -83,25 +96,34 @@ void updatePid()
 	      return;
 
 	}
-
+//P
 	int32_t output = position_error * s.pid_Kp;
 
+//I
 	pid_integrated_error += position_error * s.pid_Ki;
-	if (pid_integrated_error > 2000)
-		pid_integrated_error = 2000;
-	if (pid_integrated_error < -2000)
-		pid_integrated_error = 2000;
+	if (pid_integrated_error > 20000)
+		pid_integrated_error = 20000;
+	if (pid_integrated_error < -20000)
+		pid_integrated_error = -20000;
 
 	output += pid_integrated_error;
-
+//D
 	output += (position_error - pid_prev_position_error) * s.pid_Kd;
 	pid_prev_position_error = position_error;
+
+
+//FF1
+	output += position_delta * s.pid_FF1;
+//FF2
+	output += position_delta_delta * s.pid_FF2;
 
 	output /= 100; //provide larger dynamic range for pid. (without this, having pid_Ki = 1 was enough for oscillation.
 
     //limit output power
 	if (output > MAX_DUTY)
 		output = MAX_DUTY;
+	if (output < -MAX_DUTY)
+		output = -MAX_DUTY;
 	if(output>0)
 	{
 		dir=0;
@@ -112,14 +134,14 @@ void updatePid()
 		dir=1;
 
 	}
-
+	pwm_setDutyCycle(abs(output));
 	if(dir!=prevdir)
 	{
 		pwm_InitialBLDCCommutation();
 		prevdir=dir;
 	}
 
-	pwm_setDutyCycle(abs(output));
+
 
 
 }

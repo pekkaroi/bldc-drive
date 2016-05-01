@@ -34,9 +34,12 @@ typedef struct  {
 	volatile uint16_t encoder_PPR;
 	volatile uint16_t encoder_poles;
 	volatile int16_t encoder_counts_per_step;
+	volatile uint16_t max_current;
 	volatile int16_t pid_Kp;
 	volatile int16_t pid_Ki;
 	volatile int16_t pid_Kd;
+	volatile int16_t pid_FF1;
+	volatile int16_t pid_FF2;
 
 	volatile uint16_t usart_baud; //baud divided by 100 to fit to 16 bits! for example 115200 => 1152
 

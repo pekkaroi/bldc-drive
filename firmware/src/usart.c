@@ -30,11 +30,15 @@
 #include "adc.h"
 #include "hall.h"
 #include "configuration.h"
+
 char recvbuffer[255];
 uint8_t recvctr;
+DMA_InitTypeDef DMA_InitStructure;
+
 void initUSART(uint16_t baud)
 {
 	recvctr=0;
+	serial_stream_enabled=0;
 	GPIO_InitTypeDef GPIO_InitStructure;
 	USART_InitTypeDef USART_InitStructure;
 	NVIC_InitTypeDef NVIC_InitStructure;
@@ -96,6 +100,42 @@ void initUSART(uint16_t baud)
 	USART_ITConfig(USART, USART_IT_RXNE, ENABLE);
 
 	USART_Cmd(USART, ENABLE);
+
+	//DMA for USART TX!
+	RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
+	  /* USARTy_Tx_DMA_Channel (triggered by USARTy Tx event) Config */
+
+	DMA_DeInit(DMA1_Channel2);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = 0x40004804;
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)txbuffer;
+	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
+	DMA_InitStructure.DMA_BufferSize = 255;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_Byte;
+	DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;
+	DMA_InitStructure.DMA_Priority = DMA_Priority_VeryHigh;
+	DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
+	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
+
+	USART_DMACmd(USART3, USART_DMAReq_Tx, ENABLE);
+
+	//DMA_Cmd(DMA1_Channel2, ENABLE);
+
+
+}
+void usart_startDMA(uint16_t len)
+{
+	DMA_DeInit(DMA1_Channel2);
+	DMA_InitStructure.DMA_PeripheralBaseAddr = 0x40004804;
+	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)txbuffer;
+	DMA_InitStructure.DMA_BufferSize = len;
+	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
+	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
+	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
+	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
+	DMA_Cmd(DMA1_Channel2, ENABLE);
 }
 void usart_sendChar(char chr)
 {
@@ -111,12 +151,33 @@ void usart_sendStr(char *str)
 	str ++;
 	}
 }
+void usart_send_stream()
+{
+
+//	while (DMA_GetFlagStatus(DMA1_FLAG_TC2) == RESET)
+//	{
+//	}
+	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d\r",(int)hallpos,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1);
+	usart_startDMA(len);
+}
 void parseUsart()
 {
 	const char delimiters[] = " ";
 
 	char *param;
 	char *value;
+	if(strstr(recvbuffer, "STREAM")!=NULL)
+	{
+		strtok(recvbuffer,delimiters); //first param
+		value = strtok(NULL,delimiters);
+		if(strstr(value,"START"))
+		{
+			serial_stream_enabled=1;
+			usart_send_stream();
+		}
+		else
+			serial_stream_enabled=0;
+	}
 	if(strstr(recvbuffer, "SET")!=NULL)
 	{
 	  strtok(recvbuffer,delimiters); //first param
@@ -135,16 +196,19 @@ void parseUsart()
 	}
 	if(strstr(recvbuffer, "GET")!=NULL)
 	{
-		getConfig();
+		//getConfig();
 		printConfiguration();
 	}
-	//too empty message for anything. Send status
+
+
 	if(recvctr < 3)
 	{
-		char buf[100];
-		sprintf(buf, "Count: %d, Hall: %d, ADC: %d\n\r",(int)encoder_count, (int)hallpos, (int)ADC_value);
 
-		usart_sendStr(buf);
+		uint16_t len =sprintf(txbuffer, "Count: %d, Hall: %d, error: %d, max_error: %d\n\r",(int)encoder_count, (int)hallpos, (int)position_error, (int)max_error);
+		max_error=0;
+		usart_startDMA(len);
+
+
 	}
 }
 void USART3_IRQHandler(void)
@@ -163,11 +227,13 @@ void USART3_IRQHandler(void)
     	}
     	else
     	{
-			USART_SendData(USART3, recvbuffer[recvctr]);
-			while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET)
-			{
+			//USART_SendData(USART3, recvbuffer[recvctr]);
+			//while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET)
+			//{
 
-			}
+			//}
+    		//any received character will stop the stream.
+    		serial_stream_enabled=0;
 			recvctr++;
     	}
 

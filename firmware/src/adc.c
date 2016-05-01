@@ -24,11 +24,12 @@
 #include <stm32f10x_rcc.h>
 
 #include "adc.h"
+#include "pwm.h"
 
 void initADC()
 {
 
-
+	max_duty=MAX_DUTY;
 	GPIO_InitTypeDef GPIO_InitStructure;
 	//--Enable ADC1 and GPIOA--
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1 | RCC_APB2Periph_GPIOA, ENABLE);
@@ -111,7 +112,7 @@ void initADC()
 	//send values to DMA registers
 	DMA_Init(DMA1_Channel1, &DMA_InitStructure);
 	// Enable DMA1 Channel Transfer Complete interrupt
-	//DMA_ITConfig(DMA1_Channel1, DMA_IT_TC, ENABLE);
+	DMA_ITConfig(DMA1_Channel1, DMA_IT_TC, ENABLE);
 	DMA_Cmd(DMA1_Channel1, ENABLE); //Enable the DMA1 - Channel1
 
 	//Enable DMA1 channel IRQ Channel */
@@ -195,6 +196,20 @@ void DMA1_Channel1_IRQHandler(void) {
     //GPIO_SetBits(GPIOA,GPIO_Pin_4);       // CS
 
 	DMA_ClearITPendingBit(DMA1_IT_GL1);//0x2503
-    DMA_Cmd(DMA1_Channel1, ENABLE);
+	DMA_Cmd(DMA1_Channel1, ENABLE);
+	if(ADC_value>s.max_current && max_duty>1)
+	{
+		max_duty -= 2;
+		return;
+	}
+	if(ADC_value<=s.max_current && max_duty<MAX_DUTY)
+	{
+		max_duty ++;
+		return;
+	}
+
+
+
+
   }
 }

@@ -37,7 +37,6 @@
 #include "usart.h"
 #include "configuration.h"
 #include "input.h"
-
 volatile uint8_t dir;
 volatile servoConfig s;
 
@@ -54,7 +53,7 @@ main()
 
 	FLASH_Unlock();
 	getConfig();
-	FLASH_Lock();
+
 	initUSART(s.usart_baud);
 	printConfiguration();
 
@@ -83,6 +82,7 @@ main()
 		initPid();
 	}
 	initLeds();
+	POWER_LED_ON;
 //	errorInCommutation=1;
 	uint8_t ena;
 	//check if ENA is on already at start. If it is, start motor.
@@ -112,6 +112,7 @@ main()
 				  pwm_Commute(encoder_commutation_pos);
 				//  usart_sendStr("\n\r");
 			  }
+
 		}
 
     }
@@ -119,6 +120,11 @@ main()
 	{
 		while(1)
 		{
+			if(serial_stream_enabled && DMA_GetFlagStatus(DMA1_FLAG_TC2) == SET)
+			{
+				//dma transfer is complete
+				usart_send_stream();
+			}
 
 		}
 	}

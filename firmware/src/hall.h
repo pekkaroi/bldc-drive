@@ -21,8 +21,8 @@
 #ifndef HALL_H_
 #define HALL_H_
 
-uint16_t lasthallpos;
-uint16_t hallpos;
+volatile uint16_t lasthallpos;
+volatile uint16_t hallpos;
 
 void initHALL();
 

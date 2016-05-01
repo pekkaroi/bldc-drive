@@ -28,6 +28,7 @@
 #include "hall.h"
 #include "encoder.h"
 #include "configuration.h"
+#include "adc.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -186,7 +187,8 @@ void pwm_setDutyCycle(uint16_t duty)
 	if(!motor_running)
 		return;
 	uint16_t d = duty;
-	if(d>MAX_DUTY) d = MAX_DUTY;
+	if(d>MAX_DUTY) d = MAX_DUTY; //this is absolute MAX
+	if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
 	TIM1->CCR1 = d;
 	TIM1->CCR2 = d;
 	TIM1->CCR3 = d;

@@ -29,6 +29,9 @@ extern volatile uint8_t dir;
 #define STEP_POLARITY 0 // 0=step on falling edge, 1= step on rising edge
 #define DIR_POLARITY 0 //0=CW when 0, 1= CCW when 0.
 
+#define POWER_LED_ON GPIO_SetBits(GPIOC, GPIO_Pin_15);
+#define POWER_LED_OFF GPIO_ResetBits(GPIOC, GPIO_Pin_15);
+
 #define ENABLE_LED_ON GPIO_SetBits(GPIOC, GPIO_Pin_13);
 #define ENABLE_LED_OFF GPIO_ResetBits(GPIOC, GPIO_Pin_13);
 

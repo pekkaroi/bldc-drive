@@ -29,6 +29,7 @@
 void writeConfig()
 {
 
+	FLASH_Unlock();
 
 
 	uint16_t i;
@@ -42,6 +43,7 @@ void writeConfig()
 		ptr++;
 	}
 
+	FLASH_Lock();
 
 }
 void getConfig()
@@ -66,6 +68,9 @@ void getConfig()
 		s.pid_Kp = 10;
 		s.pid_Ki = 0;
 		s.pid_Kd = 0;
+		s.pid_FF1 = 0;
+		s.pid_FF2 = 0;
+		s.max_current = 1000;
 		s.usart_baud = 1152;
 		writeConfig(s);
 		return;
@@ -79,7 +84,7 @@ void getConfig()
 			usart_sendStr("Flash Error\n\r");
 		ptr++;
 	}
-
+	FLASH_Lock();
 	return;
 
 }
@@ -92,89 +97,101 @@ void setConfig(char* param, int16_t value)
 		//writeConfig();
 
 		//this is taken into account on next boot
-		usart_sendStr("SET commutationMethod to ");
-		usart_sendChar(value + 48);
-		usart_sendStr("\n\r");
+		usart_sendStr("SET OK\n");
+
 	}
 	if (strstr( param, "inputMethod" ) != NULL)
 	{
 		s.inputMethod = (uint16_t)value;
-		//writeConfig();
-		//this is taken into account on next boot
 
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_PPR" ) != NULL)
 	{
 		s.encoder_PPR = (uint16_t)value;
 
-		//writeConfig();
-
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_poles" ) != NULL)
 	{
 		s.encoder_poles = (uint16_t)value;
-		//writeConfig();
-
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_counts_per_step" ) != NULL)
 	{
 		s.encoder_counts_per_step = (uint16_t)value;
-		//writeConfig();
 
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Kp" ) != NULL)
 	{
 		s.pid_Kp = (int16_t)value;
-		//writeConfig();
 
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Ki" ) != NULL)
 	{
 		s.pid_Ki = (int16_t)value;
-		//writeConfig();
 
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Kd" ) != NULL)
 	{
 		s.pid_Kd = (int16_t)value;
-		//writeConfig();
 
-		usart_sendStr("SET OK");
+		usart_sendStr("SET OK\n");
+	}
+	if (strstr( param, "pid_FF1" ) != NULL)
+	{
+		s.pid_FF1 = (int16_t)value;
+
+		usart_sendStr("SET OK\n");
+	}
+	if (strstr( param, "pid_FF2" ) != NULL)
+	{
+		s.pid_FF2 = (int16_t)value;
+
+		usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "usart_baud" ) != NULL)
 	{
 		s.usart_baud = (uint16_t)value;
-		//writeConfig();
-		//this is taken into account on next boot
-		usart_sendStr("SET OK");
+
+		usart_sendStr("SET OK\n");
+	}
+	if (strstr( param, "max_current" ) != NULL)
+	{
+		s.max_current = (uint16_t)value;
+
+		usart_sendStr("SET OK\n");
 	}
 }
 void printConfiguration()
 {
 	char buf[50];
-	sprintf(buf,"commutationMethod: %d\n\r",s.commutationMethod);
+	sprintf(buf,"commutationMethod: %d\n",s.commutationMethod);
 	usart_sendStr(buf);
-	sprintf(buf,"inputMethod: %d\n\r",s.inputMethod);
+	sprintf(buf,"inputMethod: %d\n",s.inputMethod);
 	usart_sendStr(buf);
-	sprintf(buf,"encoder_PPR: %d\n\r",s.encoder_PPR);
+	sprintf(buf,"encoder_PPR: %d\n",s.encoder_PPR);
 	usart_sendStr(buf);
-	sprintf(buf,"encoder_poles: %d\n\r",s.encoder_poles);
+	sprintf(buf,"encoder_poles: %d\n",s.encoder_poles);
 	usart_sendStr(buf);
-	sprintf(buf,"encoder_counts_per_step: %d\n\r",s.encoder_counts_per_step);
+	sprintf(buf,"encoder_counts_per_step: %d\n",s.encoder_counts_per_step);
 	usart_sendStr(buf);
-	sprintf(buf,"pid_Kp: %d\n\r",s.pid_Kp);
+	sprintf(buf,"pid_Kp: %d\n",s.pid_Kp);
 	usart_sendStr(buf);
-	sprintf(buf,"pid_Ki: %d\n\r",s.pid_Ki);
+	sprintf(buf,"pid_Ki: %d\n",s.pid_Ki);
 	usart_sendStr(buf);
-	sprintf(buf,"pid_Kd: %d\n\r",s.pid_Kd);
+	sprintf(buf,"pid_Kd: %d\n",s.pid_Kd);
 	usart_sendStr(buf);
-	sprintf(buf,"usart_baud: %d\n\r",s.usart_baud);
+	sprintf(buf,"pid_FF1: %d\n",s.pid_FF1);
+	usart_sendStr(buf);
+	sprintf(buf,"pid_FF2: %d\n",s.pid_FF2);
+	usart_sendStr(buf);
+	sprintf(buf,"usart_baud: %d\n",s.usart_baud);
+	usart_sendStr(buf);
+	sprintf(buf,"max_current: %d\n",s.max_current);
 	usart_sendStr(buf);
 
 
