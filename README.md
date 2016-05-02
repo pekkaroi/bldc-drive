@@ -5,7 +5,7 @@ This is a project developing a simple BLDC servo controller. It is based on an S
 Some parts, especially the PID control loop is based on development done by user mcm_xyz in cnczone.com forum. Thank you! Check the thread http://www.cnczone.com/forums/open-source-controller-boards/283428-cnc.html 
 
 ##Disclaimer
-This software and hardware is provided "AS IS", WITHOUT ANY WARRANTY. The software is released under GPL v3. Authors accept no liability for any harm or loss resulting from use of this hardware or software.
+This software and hardware is provided "AS IS", WITHOUT ANY WARRANTY. The software is released under GPL v2. Authors accept no liability for any harm or loss resulting from use of this hardware or software.
 
 ##Firmware
 Firmware is a work-in-progress (and will be for a while :), however following features are included:
