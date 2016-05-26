@@ -55,16 +55,18 @@ void getConfig()
 	uint16_t *ptr;
 	EE_Init();
 	EE_ReadVariable(EADDR_IS_INITIALIZED,&i);
-	if(i != 0x5253)
+	if(i != 0x5252)
 	{
 		//empty or corrupted EEPROM detected: write default config
 		//EE_Format();
-		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5253);
+		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5252);
 		s.commutationMethod = commutationMethod_HALL;
 		s.inputMethod = inputMethod_stepDir;
 		s.encoder_PPR = 4000;
 		s.encoder_poles = 4;
 		s.encoder_counts_per_step = 10;
+		s.invert_dirstepena = 0;
+		s.max_error = 1000;
 		s.pid_Kp = 10;
 		s.pid_Ki = 0;
 		s.pid_Kd = 0;
@@ -97,73 +99,85 @@ void setConfig(char* param, int16_t value)
 		//writeConfig();
 
 		//this is taken into account on next boot
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 
 	}
 	if (strstr( param, "inputMethod" ) != NULL)
 	{
 		s.inputMethod = (uint16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_PPR" ) != NULL)
 	{
 		s.encoder_PPR = (uint16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_poles" ) != NULL)
 	{
 		s.encoder_poles = (uint16_t)value;
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "encoder_counts_per_step" ) != NULL)
 	{
 		s.encoder_counts_per_step = (uint16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Kp" ) != NULL)
 	{
 		s.pid_Kp = (int16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Ki" ) != NULL)
 	{
 		s.pid_Ki = (int16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_Kd" ) != NULL)
 	{
 		s.pid_Kd = (int16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_FF1" ) != NULL)
 	{
 		s.pid_FF1 = (int16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "pid_FF2" ) != NULL)
 	{
 		s.pid_FF2 = (int16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "usart_baud" ) != NULL)
 	{
 		s.usart_baud = (uint16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
 	}
 	if (strstr( param, "max_current" ) != NULL)
 	{
 		s.max_current = (uint16_t)value;
 
-		usart_sendStr("SET OK\n");
+		//usart_sendStr("SET OK\n");
+	}
+	if (strstr( param, "max_error" ) != NULL)
+	{
+		s.max_error = (uint16_t)value;
+
+		//usart_sendStr("SET OK\n");
+	}
+	if (strstr( param, "invert_dirstepena" ) != NULL)
+	{
+		s.invert_dirstepena = (uint16_t)value;
+
+		//usart_sendStr("SET OK\n");
 	}
 }
 void printConfiguration()
@@ -178,6 +192,10 @@ void printConfiguration()
 	sprintf(buf,"encoder_poles: %d\n",s.encoder_poles);
 	usart_sendStr(buf);
 	sprintf(buf,"encoder_counts_per_step: %d\n",s.encoder_counts_per_step);
+	usart_sendStr(buf);
+	sprintf(buf,"max_error: %d\n",s.max_error);
+	usart_sendStr(buf);
+	sprintf(buf,"invert_dirstepena: %d\n",s.invert_dirstepena);
 	usart_sendStr(buf);
 	sprintf(buf,"pid_Kp: %d\n",s.pid_Kp);
 	usart_sendStr(buf);

@@ -167,6 +167,8 @@ void initPWM()
 	TIM_Cmd(TIM1, ENABLE);
 	 // enable motor timer main output (the bridge signals)
 	TIM_CtrlPWMOutputs(TIM1, ENABLE);
+	pwm_motorStop();
+
 }
 
 
@@ -198,7 +200,9 @@ void pwm_setDutyCycle(uint16_t duty)
 void pwm_motorStart()
 {
 	motor_running=1;
+
 	pwm_InitialBLDCCommutation();
+	TIM_ITConfig(TIM4, TIM_IT_CC1 | TIM_IT_CC2, ENABLE); //enable HALL interrupts again
 
 }
 void pwm_motorStop()
@@ -214,6 +218,7 @@ void pwm_motorStop()
 	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+	TIM_ITConfig(TIM4, TIM_IT_CC1 | TIM_IT_CC2, DISABLE); //disable HALL interrupts, no commutation!
 
 }
 void pwm_InitialBLDCCommutation()

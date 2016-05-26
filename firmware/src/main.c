@@ -42,6 +42,7 @@ volatile servoConfig s;
 
 
 
+
 int
 main()
 {
@@ -86,11 +87,11 @@ main()
 //	errorInCommutation=1;
 	uint8_t ena;
 	//check if ENA is on already at start. If it is, start motor.
-#if ENA_POLARITY == 1
+if(!is_ena_inverted)
 		ena = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5);
-#else
+else
 		ena = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5)))&1;
-#endif
+
 	if(ena)
 	{
 		pwm_motorStart();

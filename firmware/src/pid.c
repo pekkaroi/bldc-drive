@@ -101,10 +101,10 @@ void updatePid()
 
 //I
 	pid_integrated_error += position_error * s.pid_Ki;
-	if (pid_integrated_error > 20000)
-		pid_integrated_error = 20000;
-	if (pid_integrated_error < -20000)
-		pid_integrated_error = -20000;
+	if (pid_integrated_error > 400000)
+		pid_integrated_error = 400000;
+	if (pid_integrated_error < -400000)
+		pid_integrated_error = -400000;
 
 	output += pid_integrated_error;
 //D

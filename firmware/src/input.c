@@ -27,6 +27,7 @@
 #include "encoder.h"
 #include "pid.h"
 #include "input.h"
+#include "configuration.h"
 
 void initLeds()
 {
@@ -78,11 +79,11 @@ void initStepDirInput()
 	EXTI_initStructure.EXTI_Line = EXTI_Line6;
 	EXTI_initStructure.EXTI_Mode = EXTI_Mode_Interrupt;
 
-#if STEP_POLARITY == 1
+if(!is_step_inverted)
 	EXTI_initStructure.EXTI_Trigger = EXTI_Trigger_Rising;
-#else
+else
 	EXTI_initStructure.EXTI_Trigger = EXTI_Trigger_Falling;
-#endif
+
 
 	EXTI_initStructure.EXTI_LineCmd = ENABLE;
 	EXTI_Init(&EXTI_initStructure);
@@ -108,11 +109,11 @@ void EXTI9_5_IRQHandler()
 	if(EXTI_GetITStatus(EXTI_Line5)!= RESET)
 	{
 		//ENA PIN INTERRUPT
-#if ENA_POLARITY == 1
+if(!is_ena_inverted)
 		ena = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5);
-#else
+else
 		ena = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_5)))&1;
-#endif
+
 		if(ena && !motor_running)
 		{
 
@@ -140,11 +141,11 @@ void EXTI9_5_IRQHandler()
 	{
 		//STEP PIN INTERRUPT
 
-#if DIR_POLARITY == 1
+if(!is_dir_inverted)
 		idir = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7);
-#else
+else
 		idir = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7)))&1;
-#endif
+
 		if(idir)
 		{
 			pid_requested_position+=s.encoder_counts_per_step;
@@ -207,11 +208,11 @@ void initPWMInput()
 
 
 	TIM_ICInitTypeDef TIM_ICInit;
-#if STEP_POLARITY == 1
+if(!is_step_inverted)
 	TIM_ICInit.TIM_ICPolarity = TIM_ICPolarity_Rising;
-#else
+else
 	TIM_ICInit.TIM_ICPolarity = TIM_ICPolarity_Falling;
-#endif
+
 	TIM_ICInit.TIM_ICFilter = 5;
 	TIM_ICInit.TIM_Channel = TIM_Channel_1;
 	TIM_ICInit.TIM_ICPrescaler = TIM_ICPSC_DIV1;
@@ -262,11 +263,11 @@ void TIM3_IRQHandler(void) {
 	uint16_t tim3_per = TIM3->CCR1;
 	static uint8_t prevdir;
 	uint16_t DC;
-#if DIR_POLARITY == 1
+	if(!is_dir_inverted)
 		dir = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7);
-#else
+	else
 		dir = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7)))&1;
-#endif
+
 	if(dir!=prevdir)
 	{
 

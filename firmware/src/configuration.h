@@ -28,11 +28,17 @@
 #define commutationMethod_HALL 1
 #define commutationMethod_Encoder 2
 
+#define is_ena_inverted (s.invert_dirstepena>>0)&1
+#define is_step_inverted (s.invert_dirstepena>>1)&1
+#define is_dir_inverted (s.invert_dirstepena>>2)&1
+
 typedef struct  {
 	volatile uint16_t inputMethod;
 	volatile uint16_t commutationMethod;
 	volatile uint16_t encoder_PPR;
 	volatile uint16_t encoder_poles;
+	volatile uint16_t max_error;
+	volatile uint16_t invert_dirstepena;
 	volatile int16_t encoder_counts_per_step;
 	volatile uint16_t max_current;
 	volatile int16_t pid_Kp;
