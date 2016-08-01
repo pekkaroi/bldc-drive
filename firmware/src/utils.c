@@ -20,16 +20,48 @@
 #include "utils.h"
 #include <stddef.h>
 #include <stdint.h>
+#include <stm32f10x_rcc.h>
 
+void systickInit (uint16_t frequency)
+{
+  RCC_ClocksTypeDef RCC_Clocks;
+  RCC_GetClocksFreq (&RCC_Clocks);
+  (void) SysTick_Config (RCC_Clocks.HCLK_Frequency / frequency);
+}
+static volatile uint32_t ticks;
+
+void SysTick_Handler (void)
+{
+  ticks++;
+}
+
+// return the system clock as milliseconds
+inline uint32_t millis (void)
+{
+  return ticks;
+}
+
+void delay_ms (uint32_t t)
+{
+  uint32_t start, end;
+  start = millis();
+  end = start + t;
+  if (start < end) { while ( (millis() >= start) && (millis() < end)) { // do nothing } } else { while ( (millis() &gt;= start) || (millis() &lt; end)) {
+      // do nothing
+    };
+  }
+}
+/*
 void delay_ms(const uint32_t ms)
 {
 
     uint32_t ms2 = ms*STM32_CLOCK_HZ / 1000 / STM32_CYCLES_PER_LOOP;
 
     asm volatile(" mov r0, %[ms2] \n\t"
-             "1: subs r0, #1 \n\t"
-             " bhi 1b \n\t"
+             "loop: subs r0, #1 \n\t"
+             " bhi loop \n\t"
              :
              : [ms2] "r" (ms2)
              : "r0");
 }
+*/

@@ -27,7 +27,7 @@
 #define STM32_CYCLES_PER_LOOP 6 // This will need tweaking or calculating
 
 
-
+void systickInit (uint16_t frequency);
 void delay_ms(const uint32_t ms);
 
 #endif /* UTILS_H_ */

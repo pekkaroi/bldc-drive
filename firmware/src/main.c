@@ -37,6 +37,7 @@
 #include "usart.h"
 #include "configuration.h"
 #include "input.h"
+#include "utils.h"
 volatile uint8_t dir;
 volatile servoConfig s;
 
@@ -57,7 +58,7 @@ main()
 
 	initUSART(s.usart_baud);
 	printConfiguration();
-
+	systickInit(1000);
 	initPWM();
 	initADC();
 	if( s.commutationMethod == commutationMethod_HALL)
