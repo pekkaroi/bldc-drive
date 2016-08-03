@@ -74,7 +74,7 @@ void getConfig()
 		s.pid_FF2 = 0;
 		s.max_current = 1000;
 		s.usart_baud = 1152;
-		writeConfig(s);
+		writeConfig();
 		return;
 
 	}

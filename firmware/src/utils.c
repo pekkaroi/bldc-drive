@@ -1,5 +1,9 @@
 /*
  	bldc-drive Cheap and simple brushless DC motor driver designed for CNC applications using STM32 microcontroller.
+
+    The systick based delay_ms was learned from http://www.micromouseonline.com/2016/02/02/systick-configuration-made-easy-on-the-stm32/
+
+
 	Copyright (C) 2015 Pekka Roivainen
 
 	This program is free software; you can redistribute it and/or
@@ -35,7 +39,7 @@ void SysTick_Handler (void)
   ticks++;
 }
 
-inline uint32_t millis (void)
+uint32_t millis (void)
 {
   return ticks;
 }
