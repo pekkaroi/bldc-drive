@@ -28,6 +28,16 @@
 #include "encoder.h"
 #include "input.h"
 
+int32_t position_error;
+int32_t pid_requested_position;
+int32_t pid_last_requested_position;
+int32_t pid_last_requested_position_delta;
+uint32_t pid_max_pos_error;
+volatile int32_t pid_integrated_error;
+int32_t pid_prev_position_error;
+int32_t max_error; //statistics
+
+
 void initPid()
 {
 

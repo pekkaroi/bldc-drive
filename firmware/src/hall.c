@@ -23,6 +23,11 @@
 #include <stm32f10x_rcc.h>
 #include "hall.h"
 #include "pwm.h"
+
+volatile uint16_t lasthallpos;
+volatile uint16_t hallpos;
+
+
 void initHALL()
 {
 	//Hall sensor is connected to TIM4

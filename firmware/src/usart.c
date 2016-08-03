@@ -31,6 +31,10 @@
 #include "hall.h"
 #include "configuration.h"
 
+char txbuffer[255];
+volatile uint8_t serial_stream_enabled;
+
+
 char recvbuffer[255];
 uint8_t recvctr;
 DMA_InitTypeDef DMA_InitStructure;

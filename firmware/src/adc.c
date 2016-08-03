@@ -26,6 +26,10 @@
 #include "adc.h"
 #include "pwm.h"
 
+
+volatile uint16_t ADC_value;
+volatile uint16_t max_duty;
+
 void initADC()
 {
 

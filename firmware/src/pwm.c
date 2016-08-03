@@ -32,6 +32,10 @@
 
 #define FALSE 0
 #define TRUE 1
+
+volatile uint8_t errorInCommutation;
+
+
 static const uint8_t BLDC_BRIDGE_STATE_BACKWARD[8][6] =   // Motor step
 {
    { FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  //  //000

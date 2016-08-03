@@ -30,7 +30,7 @@ void usart_sendStr(char *str);
 void usart_send_stream();
 
 extern volatile servoConfig s;
-char txbuffer[255];
-volatile uint8_t serial_stream_enabled;
+extern char txbuffer[255];
+extern volatile uint8_t serial_stream_enabled;
 
 #endif /* USART_H_ */

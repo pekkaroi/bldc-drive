@@ -29,6 +29,10 @@
 #include "input.h"
 #include "configuration.h"
 
+volatile uint16_t updateCtr;
+
+volatile uint16_t motor_running;
+
 void initLeds()
 {
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC,ENABLE);

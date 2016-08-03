@@ -38,9 +38,9 @@ extern volatile uint8_t dir;
 #define ERROR_LED_ON GPIO_SetBits(GPIOC, GPIO_Pin_14);
 #define ERROR_LED_OFF GPIO_ResetBits(GPIOC, GPIO_Pin_14);
 
-volatile uint16_t updateCtr;
+extern volatile uint16_t updateCtr;
 
-volatile uint16_t motor_running;
+extern volatile uint16_t motor_running;
 
 void initStepDirInput();
 void initPWMInput();

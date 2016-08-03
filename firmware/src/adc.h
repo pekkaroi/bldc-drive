@@ -22,9 +22,10 @@
 
 #define ADC_TIM TIM5
 #define ADC_TIM_PERIPH RCC_APB1Periph_TIM5
-volatile uint16_t ADC_value;
-void initADC();
-volatile uint16_t max_duty;
 
+extern volatile uint16_t ADC_value;
+extern volatile uint16_t max_duty;
+
+void initADC();
 
 #endif /* ADC_H_ */
