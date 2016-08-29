@@ -87,7 +87,7 @@ main()
 	}
 	initLeds();
 	POWER_LED_ON;
-//	errorInCommutation=1;
+
 	uint8_t ena;
 	//check if ENA is on already at start. If it is, start motor.
 if(!is_ena_inverted)
@@ -107,15 +107,20 @@ else
 		{
 
 
-			  getEncoderCount();
-			  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
-			  {
-				  //usart_sendStr("commutation to ");
-				  //usart_sendChar(encoder_commutation_table[encoder_shaft_pos]+48);
-				  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
-				  pwm_Commute(encoder_commutation_pos);
-				//  usart_sendStr("\n\r");
-			  }
+			getEncoderCount();
+			if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
+			{
+			  //usart_sendStr("commutation to ");
+			  //usart_sendChar(encoder_commutation_table[encoder_shaft_pos]+48);
+			  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
+			  pwm_Commute(encoder_commutation_pos);
+			//  usart_sendStr("\n\r");
+			}
+			if(serial_stream_enabled && DMA_GetFlagStatus(DMA1_FLAG_TC2) == SET)
+			{
+				//dma transfer is complete
+				usart_send_stream();
+			}
 
 		}
 

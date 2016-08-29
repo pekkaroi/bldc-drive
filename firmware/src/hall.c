@@ -116,7 +116,8 @@ void TIM4_IRQHandler(void) {
 
 
 	hallpos = newhallpos;
-	pwm_Commute(hallpos);
+	if(hallpos >0 && hallpos <7) //don't commute on illgal combiations
+		pwm_Commute(hallpos);
 
   } else {
     ;
