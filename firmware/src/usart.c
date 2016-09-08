@@ -28,7 +28,7 @@
 #include "pwm.h"
 #include "encoder.h"
 #include "adc.h"
-#include "hall.h"
+//#include "hall.h"
 #include "configuration.h"
 
 char txbuffer[255];
@@ -161,7 +161,7 @@ void usart_send_stream()
 //	while (DMA_GetFlagStatus(DMA1_FLAG_TC2) == RESET)
 //	{
 //	}
-	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d;%d\r",(int)hallpos,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1,pid_integrated_error);
+	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d;%d\r",0,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1,pid_integrated_error);
 	usart_startDMA(len);
 }
 void parseUsart()
@@ -208,7 +208,7 @@ void parseUsart()
 	if(recvctr < 3)
 	{
 
-		uint16_t len =sprintf(txbuffer, "Count: %d, Hall: %d, error: %d, max_error: %d\n\r",(int)encoder_count, (int)hallpos, (int)position_error, (int)max_error);
+		uint16_t len =sprintf(txbuffer, "Count: %d, Hall: %d, error: %d, max_error: %d\n\r",(int)encoder_count, (int)0, (int)position_error, (int)max_error);
 		max_error=0;
 		usart_startDMA(len);
 

@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include "pid.h"
 #include "pwm.h"
-#include "hall.h"
 #include "encoder.h"
 #include "input.h"
 
@@ -32,17 +31,15 @@ int32_t position_error;
 int32_t pid_requested_position;
 int32_t pid_last_requested_position;
 int32_t pid_last_requested_position_delta;
-uint32_t pid_max_pos_error;
 volatile int32_t pid_integrated_error;
 int32_t pid_prev_position_error;
 int32_t max_error; //statistics
-
+volatile uint16_t duty;
 
 void initPid()
 {
 
 	pid_requested_position=encoder_count;
-	pid_max_pos_error=1000; //quarter turn
 	pid_integrated_error = 0;
 	pid_prev_position_error =0;
 
@@ -99,7 +96,7 @@ void updatePid()
 
 	abs_position_error = abs(position_error);
 
-	if (abs_position_error > pid_max_pos_error)
+	if (abs_position_error > s.max_error)
 	{
 	      pwm_motorStop();
 	      ERROR_LED_ON;
@@ -134,6 +131,7 @@ void updatePid()
 		output = MAX_DUTY;
 	if (output < -MAX_DUTY)
 		output = -MAX_DUTY;
+
 	if(output>0)
 	{
 		dir=0;
@@ -144,12 +142,9 @@ void updatePid()
 		dir=1;
 
 	}
-	pwm_setDutyCycle(abs(output));
-	if(dir!=prevdir)
-	{
-		pwm_InitialBLDCCommutation();
-		prevdir=dir;
-	}
+
+	duty = abs(output);
+
 
 
 

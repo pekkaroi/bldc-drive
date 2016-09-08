@@ -62,12 +62,12 @@ void getConfig()
 		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5252);
 		s.commutationMethod = commutationMethod_HALL;
 		s.inputMethod = inputMethod_stepDir;
-		s.encoder_PPR = 4000;
-		s.encoder_poles = 4;
+		s.encoder_PPR = 2400;
+		s.encoder_poles = 3;
 		s.encoder_counts_per_step = 10;
 		s.invert_dirstepena = 0;
 		s.max_error = 1000;
-		s.pid_Kp = 10;
+		s.pid_Kp = 2000;
 		s.pid_Ki = 0;
 		s.pid_Kd = 0;
 		s.pid_FF1 = 0;

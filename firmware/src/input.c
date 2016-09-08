@@ -249,6 +249,7 @@ void TIM3_IRQHandler(void) {
 	}
 	else
 	{
+		TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
 		updateCtr++;
 		if(updateCtr>50)
 		{
@@ -272,12 +273,7 @@ void TIM3_IRQHandler(void) {
 	else
 		dir = (~(GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7)))&1;
 
-	if(dir!=prevdir)
-	{
 
-		pwm_InitialBLDCCommutation();
-	}
-	prevdir=dir;
 	if(tim3_per>0 && tim3_per>tim3_dc)
 	{
 	  DC = ((uint32_t)(BLDC_CHOPPER_PERIOD*tim3_dc)/(uint32_t)tim3_per);
@@ -285,25 +281,13 @@ void TIM3_IRQHandler(void) {
 	else
 	  DC=0;
 
-	if(DC<BLDC_NOL*3) DC=BLDC_NOL*3;
-	pwm_setDutyCycle(DC);
-	updateCtr=0;
-/*	if(motor_running==0)
-	{
-		motor_running=1;
-		//BLDCMotorPrepareCommutation();
 
-	}*/
+	duty = DC;
+	updateCtr=0;
 	TIM_ClearITPendingBit(TIM3, TIM_IT_CC1);
 
   }
-  else if (TIM_GetITStatus(TIM3, TIM_IT_Update) != RESET)
-  {
-	//if PWM signal is lost for some reason, stop motor
 
-	TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
-
-  }
 }
 
 

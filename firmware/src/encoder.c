@@ -27,73 +27,89 @@
 #include "usart.h"
 #include "input.h"
 #include "pwm.h"
-#include "hall.h"
 #include "utils.h"
-
-int32_t encoder_count;
+#include "math.h"
+volatile int32_t encoder_count;
 
 uint16_t encoder_shaft_pos; //this is the shaft position as encoder counts
-uint16_t encoder_full_rounds;
 uint16_t encoder_commutation_pos; //this is shaft position from the beginning of current commuatiton sequence.
 
-uint8_t encoder_commutation_table[4096]; //20 poles max //4096 PPR max at the moment.
-uint16_t encoder_next_commutation_cnt_cw;
-uint16_t encoder_next_commutation_cnt_ccw;
+int16_t sine_table[4096]; //20 poles max //4096 PPR max at the moment.
 
-uint16_t encoder_lastCount;
-//uint16_t findNextEncoderCommutationCNT(int8_t dir);
-void buildCommutationTable()
-{
-	uint16_t i;
-	//char buf[10];
-	for(i=0;i<s.encoder_PPR;i++)
-	{
-		encoder_commutation_table[i] = commutation_sequence[(i*s.encoder_poles*6/s.encoder_PPR) % 6];
-		//sprintf(buf,"%d\n\r",encoder_commutation_table[i]);
-		//usart_sendStr(buf);
-	}
-}
+volatile uint16_t encoder_lastCount;
 
-/* THIS IS OLD (INTERRUPT BASED) METHOD OF COMMUTATION
+uint16_t commutation_length; //how many encoder steps there are per commutation circle (i.e encoder_ppr/encoder_poles)
+
+
 void buildCommutationTable()
 {
 	uint16_t i;
 	char buf[10];
-	for(i = 0;i<s.encoder_poles*6;i++)
+	commutation_length = s.encoder_PPR/s.encoder_poles;
+
+	for(i=0;i<commutation_length;i++)
 	{
-		encoder_commutation_table[i] = (i * s.encoder_PPR) / s.encoder_poles / 6;
-		sprintf(buf,"%d\n\r",encoder_commutation_table[i]);
-		usart_sendStr(buf);
+		sine_table[i] = (int16_t)(sinf((float)i/(float)commutation_length*2*M_PI)*(float)SINE_TABLE_MAX);
 	}
-	encoder_commutation_table[i]=UINT16_MAX;
 }
 
-*/
+/**
+ *this function sets the current sine values for each phase based on current commutation position and direction of drive
+ */
+
+uint16_t getCommutationPos(uint8_t phase)
+{
+	//if driving forward, the commutation must lead the actual position by 90 degrees
+	//if driving backward, the commutation must lag the actual position by 90 degrees
+	int32_t tmp;
+	if(dir)
+	{
+		tmp = (encoder_commutation_pos - commutation_length/4 + commutation_length*phase/3);
+		if (tmp<0)
+		{
+			tmp+=commutation_length;
+		}
+		return (uint16_t)(tmp % commutation_length);
+
+	}
+	else
+	{
+		tmp= (encoder_commutation_pos + commutation_length/4 + commutation_length*phase/3);
+		if (tmp<0)
+		{
+			tmp+=commutation_length;
+		}
+		return (uint16_t)(tmp % commutation_length);
+
+	}
+}
+
 void forcedInitialization()
 {
-	//during initialization the positive voltage will be applied to Channel1 and negative to Channel3. This will move the rotor to commutation position 1
+	//apply positive voltage (PWM) to phase B and negative to phase C. (Commutation table starts from that position)
 	if(motor_running)
 		return;
 
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
+	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
 	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_InActive);
-	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
-
-	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_ForcedAction_Active);
+	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
+	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+
+	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_Active);
+	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
 	uint16_t i;
-	for(i=0;i<1000;i++)
+	for(i=2000;i<4000;i++)
 	{
 		TIM1->CCR1=i;
 		TIM1->CCR2=i;
 		TIM1->CCR3=i;
 		delay_ms(1);
 	}
-	delay_ms(10);
+	delay_ms(1000);
 	TIM_SetCounter(ENCODER_TIM,0);
 	encoder_count=0;
 	encoder_lastCount=0;
@@ -168,167 +184,17 @@ if( ENCODER_TIM==TIM2)
 
 	TIM_Cmd(ENCODER_TIM, ENABLE);
 
-/*
-	if(s.commutationMethod == commutationMethod_Encoder)
-	{
-		//initialize commutation interrupts for Encoder TIM
-		TIM_OCInitTypeDef       TIM2_OC;
-		TIM2_OC.TIM_OCMode      = TIM_OCMode_Inactive;                // Output compare toggling mode
-		TIM2_OC.TIM_OutputState = TIM_OutputState_Disable;           // Enabling the Output Compare state
-		TIM2_OC.TIM_OCPolarity  = TIM_OCPolarity_High;               // Reverse polarity
-		TIM2_OC.TIM_Pulse       = 20000;                       // Initialize to some large value, will be reinitialized
-		TIM_OC3Init(TIM2, &TIM2_OC);                                // Initializing Output Compare 1 structure
-		TIM_OC3PreloadConfig(TIM3, TIM_OCPreload_Disable);          // Disabling Ch.1 Output Compare preload
-		TIM2_OC.TIM_Pulse       = 22000;                       // Initialize to some large value, will be reinitialized
-		TIM_OC4Init(TIM2, &TIM2_OC);                                // Initializing Output Compare 1 structure
-		TIM_OC4PreloadConfig(TIM3, TIM_OCPreload_Disable);          // Disabling Ch.1 Output Compare preload
 
-
-		TIM_ClearFlag(TIM2, TIM_FLAG_CC3);
-		TIM_ClearFlag(TIM2, TIM_FLAG_CC4);
-
-		TIM_ITConfig(TIM2, TIM_IT_CC3 | TIM_IT_CC4, ENABLE);
-
-
-		// we use preemption interrupts here,  BLDC Bridge switching and
-		// Hall has highest priority
-		NVIC_InitTypeDef NVIC_InitStructure;
-		NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn;
-		NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0x00;
-		NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
-		NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
-		NVIC_Init(&NVIC_InitStructure);
-
-		buildCommutationTable();
-		forcedInitialization();
-
-
-		TIM2->CCR3 = -1;
-		TIM2->CCR4 = findNextEncoderCommutationCNT(1);
-		TIM_ITConfig(TIM2, TIM_IT_CC3 | TIM_IT_CC4, ENABLE);
-
-
-	}
-	*/
-	if(s.commutationMethod == commutationMethod_Encoder)
-	{
-		buildCommutationTable();
-		forcedInitialization();
-	}
-	if(s.commutationMethod == commutationMethod_HALL)
-	{
-	encoder_count=0;
-	encoder_lastCount=0;
-	encoder_shaft_pos=0;
+	buildCommutationTable();
+	forcedInitialization();
 
 
 
-	}
+
 
 
 }
 
-/*
-uint16_t findCurrentEncoderCommutationPos()
-{
-	uint16_t i;
-	uint16_t pos;
-
-	for(i=s.encoder_poles*6;i>=0;i--)
-	{
-		if(encoder_shaft_pos >= encoder_commutation_table[i])
-		{
-			pos = i % 6;
-			return pos;
-		}
-	}
-	//newer should end up here
-	return 0;
-
-
-}
-uint16_t findNextEncoderCommutationPos(int8_t dir)
-{
-
-	uint16_t i;
-	int16_t add;
-	uint16_t pos;
-	uint16_t total = s.encoder_poles*6;
-	for(i=s.encoder_poles*6;i>=0;i--)
-	{
-		if(encoder_shaft_pos >= encoder_commutation_table[i])
-		{
-			if(dir>0)
-				add = i+1;
-			else
-				add = i-1;
-			if(add==s.encoder_poles*6)
-				add = 0;
-			else if(add==-1)
-				add =((s.encoder_poles*6)-1);
-			return (encoder_full_rounds*s.encoder_PPR + encoder_commutation_table[add]);
-		}
-	}
-	//newer should end up here
-	return 0;
-
-
-}
-
-uint16_t findNextEncoderCommutationCNT(int8_t dir)
-{
-
-	uint16_t i;
-	int16_t add;
-	uint16_t pos;
-	uint16_t total = s.encoder_poles*6;
-	int16_t tmp;
-	uint16_t CNT_tmp,CNT_delta;
-	for(i=s.encoder_poles*6;i>=0;i--)
-	{
-		if(encoder_shaft_pos >= encoder_commutation_table[i])
-		{
-			if(dir>0)
-			{
-				add = i+1;
-				if(add>=s.encoder_poles*6)
-				{
-					add = 0;
-					CNT_delta = s.encoder_PPR-encoder_shaft_pos;
-				}
-				else
-				{
-					CNT_delta = encoder_commutation_table[add]-encoder_shaft_pos;
-				}
-
-			}
-			else
-			{
-				add = i-1;
-				if(add<=-1)
-				{
-					add =((s.encoder_poles*6)-1);
-					CNT_delta = encoder_commutation_table[add]-s.encoder_PPR;
-				}
-				else
-				{
-					CNT_delta = encoder_commutation_table[add]-encoder_shaft_pos;
-				}
-			}
-
-
-			tmp = ENCODER_TIM->CNT + CNT_delta;
-			//if(tmp<0) tmp = 65535-tmp;
-			//else if (tmp>65535) tmp -= 65535;
-			return (uint16_t)tmp;
-		}
-	}
-
-	//newer should end up here
-	return 0;
-
-}
-*/
 void getEncoderCount()
 {
 	uint16_t now = ENCODER_TIM->CNT;
@@ -344,41 +210,6 @@ void getEncoderCount()
 	else
 		encoder_shaft_pos = shaft_pos_tmp;
 
+	encoder_commutation_pos = encoder_shaft_pos % commutation_length;
 
 }
-/*
-void TIM2_IRQHandler(void) {
-  int8_t currentEncPos = findCurrentEncoderCommutationPos();
-  if (TIM_GetITStatus(TIM2, TIM_IT_CC3) != RESET)
-  {
-	  getEncoderCount();
-	  currentEncPos--;
-	  if(currentEncPos<0) currentEncPos=5;
-	  TIM2->CCR3 = findNextEncoderCommutationCNT(0);
-	  TIM2->CCR4 = TIM2->CNT+1;
-	  TIM_ClearITPendingBit(TIM2, TIM_IT_CC3);
-	  pwm_Commute(commutation_sequence[currentEncPos]);
-	  //usart_sendStr("ENC commuted CCW: ");
-	  //usart_sendChar(commutation_sequence[findCurrentEncoderCommutationPos(0)] + 48);
-	  //usart_sendStr("\n\r");
-
-  }
-  else if (TIM_GetITStatus(TIM2, TIM_IT_CC4) != RESET)
-  {
-	  getEncoderCount();
-	  currentEncPos++;
-	  if(currentEncPos>5) currentEncPos=0;
-	  TIM2->CCR4 = findNextEncoderCommutationCNT(1);
-	  TIM2->CCR3 = TIM2->CNT-1;
-	  TIM_ClearITPendingBit(TIM2, TIM_IT_CC4);
-	  pwm_Commute(commutation_sequence[currentEncPos]);
-	  //usart_sendStr("ENC commuted CW: ");
-	  //usart_sendChar(commutation_sequence[findCurrentEncoderCommutationPos(1)] + 48);
-	  //usart_sendStr("\n\r");
-  } else {
-    ; // this should not happen
-  }
-
-}*/
-
-

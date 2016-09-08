@@ -37,6 +37,7 @@ extern uint32_t pid_max_pos_error;
 extern volatile int32_t pid_integrated_error;
 extern int32_t pid_prev_position_error;
 extern int32_t max_error; //statistics
+extern volatile uint16_t duty;
 
 
 #endif /* PID_H_ */
