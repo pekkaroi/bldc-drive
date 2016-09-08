@@ -36,7 +36,7 @@ uint16_t encoder_shaft_pos; //this is the shaft position as encoder counts
 uint16_t encoder_full_rounds;
 uint16_t encoder_commutation_pos; //this is shaft position from the beginning of current commuatiton sequence.
 
-uint8_t encoder_commutation_table[4096]; //20 poles max //4096 PPR max at the moment.
+uint8_t encoder_commutation_table[4096]; //20 poles max //8096 PPR max at the moment.
 uint16_t encoder_next_commutation_cnt_cw;
 uint16_t encoder_next_commutation_cnt_ccw;
 
