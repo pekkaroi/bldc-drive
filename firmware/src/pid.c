@@ -70,7 +70,6 @@ void updatePid()
 	uint32_t abs_position_error;
 	int32_t position_delta;
 	int32_t position_delta_delta;
-	static uint8_t prevdir;
 	getEncoderCount();
 	if (!motor_running)
 	{

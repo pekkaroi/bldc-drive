@@ -28,23 +28,24 @@
 #include "input.h"
 #include "pwm.h"
 #include "utils.h"
+#include "adc.h"
 #include "math.h"
+
 volatile int32_t encoder_count;
 
 uint16_t encoder_shaft_pos; //this is the shaft position as encoder counts
 uint16_t encoder_commutation_pos; //this is shaft position from the beginning of current commuatiton sequence.
 
-int16_t sine_table[4096]; //20 poles max //4096 PPR max at the moment.
+int16_t sine_table[4096]; //the required length of sine_table is encoder_ppr/number_of_poles, so this allows quite high ppr encoder..
 
 volatile uint16_t encoder_lastCount;
 
-uint16_t commutation_length; //how many encoder steps there are per commutation circle (i.e encoder_ppr/encoder_poles)
+uint16_t commutation_length; //how many encoder steps there are per commutation circle (i.e encoder_ppr/motor_poles)
 
 
 void buildCommutationTable()
 {
 	uint16_t i;
-	char buf[10];
 	commutation_length = s.encoder_PPR/s.encoder_poles;
 
 	for(i=0;i<commutation_length;i++)
@@ -104,9 +105,19 @@ void forcedInitialization()
 	uint16_t i;
 	for(i=2000;i<4000;i++)
 	{
-		TIM1->CCR1=i;
-		TIM1->CCR2=i;
-		TIM1->CCR3=i;
+		//increase duty until ADC kicks in
+		if(i>max_duty)
+		{
+			TIM1->CCR1=max_duty;
+			TIM1->CCR2=max_duty;
+			TIM1->CCR3=max_duty;
+		}
+		else
+		{
+			TIM1->CCR1=i;
+			TIM1->CCR2=i;
+			TIM1->CCR3=i;
+		}
 		delay_ms(1);
 	}
 	delay_ms(1000);
@@ -203,7 +214,6 @@ void getEncoderCount()
 
 	encoder_count += delta;
 
-	//encoder_full_rounds = encoder_count / s.encoder_PPR;
 	int16_t shaft_pos_tmp = encoder_count % s.encoder_PPR;
 	if(shaft_pos_tmp < 0)
 		encoder_shaft_pos = s.encoder_PPR + shaft_pos_tmp;

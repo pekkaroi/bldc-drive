@@ -266,7 +266,6 @@ void TIM3_IRQHandler(void) {
 
 	uint16_t tim3_dc = TIM3->CCR2;
 	uint16_t tim3_per = TIM3->CCR1;
-	static uint8_t prevdir;
 	uint16_t DC;
 	if(!is_dir_inverted)
 		dir = GPIO_ReadInputDataBit(GPIOA, GPIO_Pin_7);

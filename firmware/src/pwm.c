@@ -26,7 +26,6 @@
 #include "pwm.h"
 #include "input.h"
 #include "pid.h"
-//#include "hall.h"
 #include "encoder.h"
 #include "configuration.h"
 #include "adc.h"
@@ -100,12 +99,6 @@ void initPWM()
 
 	TIM_BDTRConfig(TIM1, &TIM_BDTRInitStructure);
 
-
-	//Commutation event mapped to TIM4 - We are not using commute event, but interrupt from Hall timer directly to commute.
-	//Not optimal solution?
-	//TIM_SelectInputTrigger(TIM1, TIM_TS_ITR3);
-
-
 	TIM_ITConfig(TIM1, TIM_IT_CC4, ENABLE); //adc sampling interrupt
 	NVIC_InitTypeDef NVIC_InitStructure;
 	NVIC_InitStructure.NVIC_IRQChannel = TIM1_CC_IRQn;
@@ -147,7 +140,7 @@ void pwm_setDutyCycle()
 
 	uint16_t d = duty;
 	if(d>MAX_DUTY) d = MAX_DUTY; //this is absolute MAX
-	//if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
+	if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
 	TIM1->CCR1 = (int32_t)sine_table[pos[0]]*d/SINE_TABLE_MAX+ZERO_DUTY;
 	TIM1->CCR2 = (int32_t)sine_table[pos[1]]*d/SINE_TABLE_MAX+ZERO_DUTY;
 	TIM1->CCR3 = (int32_t)sine_table[pos[2]]*d/SINE_TABLE_MAX+ZERO_DUTY;

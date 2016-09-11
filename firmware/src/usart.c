@@ -110,7 +110,7 @@ void initUSART(uint16_t baud)
 	  /* USARTy_Tx_DMA_Channel (triggered by USARTy Tx event) Config */
 
 	DMA_DeInit(DMA1_Channel2);
-	DMA_InitStructure.DMA_PeripheralBaseAddr = 0x40004804;
+	DMA_InitStructure.DMA_PeripheralBaseAddr = (uint32_t)&USART->DR;
 	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)txbuffer;
 	DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralDST;
 	DMA_InitStructure.DMA_BufferSize = 255;
@@ -132,12 +132,8 @@ void initUSART(uint16_t baud)
 void usart_startDMA(uint16_t len)
 {
 	DMA_DeInit(DMA1_Channel2);
-	DMA_InitStructure.DMA_PeripheralBaseAddr = 0x40004804;
 	DMA_InitStructure.DMA_MemoryBaseAddr = (uint32_t)txbuffer;
 	DMA_InitStructure.DMA_BufferSize = len;
-	DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
-	DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
-	DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
 	DMA_Init(DMA1_Channel2, &DMA_InitStructure);
 	DMA_Cmd(DMA1_Channel2, ENABLE);
 }
@@ -158,9 +154,6 @@ void usart_sendStr(char *str)
 void usart_send_stream()
 {
 
-//	while (DMA_GetFlagStatus(DMA1_FLAG_TC2) == RESET)
-//	{
-//	}
 	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d;%d\r",0,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1,pid_integrated_error);
 	usart_startDMA(len);
 }
@@ -215,58 +208,38 @@ void parseUsart()
 
 	}
 }
-void USART3_IRQHandler(void)
+void serialInterrupt()
 {
 	char in;
-    if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
-    {
-    	in = (char)USART_ReceiveData(USART3);
-    	recvbuffer[recvctr] = in;
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
+	{
+		in = (char)USART_ReceiveData(USART3);
+		recvbuffer[recvctr] = in;
 
-    	if(in=='\r')
-    	{
-    		parseUsart();
-    		recvctr=0;
+		if(in=='\r')
+		{
+			parseUsart();
+			recvctr=0;
 
-    	}
-    	else
-    	{
-			//USART_SendData(USART3, recvbuffer[recvctr]);
-			//while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET)
-			//{
-
-			//}
-    		//any received character will stop the stream.
-    		serial_stream_enabled=0;
+		}
+		else
+		{
+			//any received character will stop the stream.
+			serial_stream_enabled=0;
 			recvctr++;
-    	}
+		}
 
-    }
-
+	}
 }
+void USART3_IRQHandler(void)
+{
+
+	serialInterrupt();
+}
+
 
 void USART1_IRQHandler(void)
 {
-	char in;
-    if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
-    {
-    	in = (char)USART_ReceiveData(USART1);
-    	recvbuffer[recvctr] = in;
-
-    	if(in=='\r')
-    	{
-    		parseUsart();
-    		recvctr=0;
-    	}
-    	else
-    	{
-			USART_SendData(USART1, recvbuffer[recvctr]);
-			while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-			{
-
-			}
-    	}
-    	recvctr++;
-    }
-
+	serialInterrupt();
 }
+
