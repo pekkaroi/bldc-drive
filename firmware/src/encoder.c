@@ -65,7 +65,7 @@ uint16_t getCommutationPos(uint8_t phase)
 	int32_t tmp;
 	if(dir)
 	{
-		tmp = (encoder_commutation_pos - commutation_length/4 + commutation_length*phase/3);
+		tmp = (encoder_commutation_pos - commutation_length/4 + commutation_length*phase/3 + s.commutation_offset);
 		if (tmp<0)
 		{
 			tmp+=commutation_length;
@@ -75,7 +75,7 @@ uint16_t getCommutationPos(uint8_t phase)
 	}
 	else
 	{
-		tmp= (encoder_commutation_pos + commutation_length/4 + commutation_length*phase/3);
+		tmp= (encoder_commutation_pos + commutation_length/4 + commutation_length*phase/3 + s.commutation_offset);
 		if (tmp<0)
 		{
 			tmp+=commutation_length;
@@ -92,9 +92,9 @@ void forcedInitialization()
 		return;
 
 
-	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
-	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+	//TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);
+	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Disable);
+	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
 
 	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
 	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
@@ -102,6 +102,7 @@ void forcedInitialization()
 
 	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_ForcedAction_Active);
 	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+
 	uint16_t i;
 	for(i=2000;i<4000;i++)
 	{
@@ -120,16 +121,14 @@ void forcedInitialization()
 		}
 		delay_ms(1);
 	}
-	delay_ms(1000);
+	delay_ms(100);
 	TIM_SetCounter(ENCODER_TIM,0);
 	encoder_count=0;
 	encoder_lastCount=0;
 	encoder_shaft_pos=0;
 
 	delay_ms(1);
-	TIM1->CCR1=0;
-	TIM1->CCR2=0;
-	TIM1->CCR3=0;
+	pwm_motorStop();
 
 
 }

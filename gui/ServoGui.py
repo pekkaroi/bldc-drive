@@ -32,7 +32,8 @@ drivesettings = [
     "usart_baud",
     "max_current",
     "max_error",
-    "invert_dirstepena"
+    "invert_dirstepena",
+    "commutation_offset"
     ]
 
 class SerialThread(threading.Thread):
@@ -253,33 +254,36 @@ class topFrame(Frame):
         parts = strm.split(";")
 
         self.laststrm.set(strm)
-        self.hall.append(int(parts[0]))
-        if len(self.hall) > 5000:
-            self.hall.pop(0)
+        try:
+            self.hall.append(int(parts[0]))
+            if len(self.hall) > 5000:
+                self.hall.pop(0)
 
-        self.encoder_count.append(parts[1])
-        if len(self.encoder_count) > 5000:
-            self.encoder_count.pop(0)
+            self.encoder_count.append(int(parts[1]))
+            if len(self.encoder_count) > 5000:
+                self.encoder_count.pop(0)
 
-        self.requested_position.append(parts[2])
-        if len(self.requested_position) > 5000:
-            self.requested_position.pop(0)
+            self.requested_position.append(int(parts[2]))
+            if len(self.requested_position) > 5000:
+                self.requested_position.pop(0)
 
-        self.requested_delta.append(parts[3])
-        if len(self.requested_delta) > 5000:
-            self.requested_delta.pop(0)
+            self.requested_delta.append(int(parts[3]))
+            if len(self.requested_delta) > 5000:
+                self.requested_delta.pop(0)
 
-        self.pos_error.append(parts[4])
-        if len(self.pos_error) > 5000:
-            self.pos_error.pop(0)
+            self.pos_error.append(int(parts[4]))
+            if len(self.pos_error) > 5000:
+                self.pos_error.pop(0)
 
-        self.adc_value.append(parts[5])
-        if len(self.adc_value) > 5000:
-            self.adc_value.pop(0)
+            self.adc_value.append(int(parts[5]))
+            if len(self.adc_value) > 5000:
+                self.adc_value.pop(0)
 
-        self.pid_output.append(parts[5])
-        if len(self.pid_output) > 5000:
-            self.pid_output.pop(0)
+            self.pid_output.append(int(parts[5]))
+            if len(self.pid_output) > 5000:
+                self.pid_output.pop(0)
+        except ValueError:
+            print "ValueError: "+strm
 
     def updateCanvas(self):
 

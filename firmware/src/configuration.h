@@ -34,7 +34,7 @@
 
 typedef struct  {
 	volatile uint16_t inputMethod;
-	volatile uint16_t commutationMethod;
+	volatile uint16_t commutationMethod; //commutationMethod not used in sinusoid drive.
 	volatile uint16_t encoder_PPR;
 	volatile uint16_t encoder_poles;
 	volatile uint16_t max_error;
@@ -46,6 +46,7 @@ typedef struct  {
 	volatile int16_t pid_Kd;
 	volatile int16_t pid_FF1;
 	volatile int16_t pid_FF2;
+	volatile int16_t commutation_offset;
 
 	volatile uint16_t usart_baud; //baud divided by 100 to fit to 16 bits! for example 115200 => 1152
 
