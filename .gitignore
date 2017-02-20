@@ -42,7 +42,7 @@ _autosave*
 # KiCAD Backup and temp files
 *.bak
 *-cache.lib
-*.kicad_pcb.bak
+*.kicad_pcb-bak
 *.csv
 *.xml
 
