@@ -1,3 +1,5 @@
+# WARNING - THIS IS A FORK OF THE bldc-drive
+
 # bldc-drive
 
 This is a project developing a simple BLDC servo controller. It is based on an STM32F103 microcontroller.
@@ -13,6 +15,7 @@ Firmware is a work-in-progress (and will be for a while :), however following fe
 * Step+Dir input interface with PID position control loop.
 * PWM+Dir input interface in velocity mode.
 * USART communitacation for configuration. Configuration settings saved to flash memory.
+* TODO: Motor Test Mode to simply activate a Motor with a fixed frequency, no encoder needed
 
 ###Update 1st May 2016
 Some updates to the firmware. 
@@ -27,9 +30,14 @@ First prototype hardware is built and it is working well. However, there are cou
 * Few connectors in the layout missed solder stop openings. They were bit painfull to solder. :)
 * The current amplifier INA27x connection is wrong. The IN+ and IN- should be swapped.
 
+###STATUS QUO:
+
 Second hardware revision with the above findings fixed is published. There are no known issues, two servo drives are succesfully driving my CNC router. Pics and videos to come..
 
+###TODOs:
 
-
+* make 100n blocking capacitors smaller, likewise 0603
+* print all part-values into the schematic
+* 
 
 
