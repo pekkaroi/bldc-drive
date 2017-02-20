@@ -46,10 +46,7 @@ volatile servoConfig s;
 
 
 
-int
-main()
-{
-
+int main() {
 
 	motor_running=0;
 	updateCtr=0;
@@ -106,7 +103,6 @@ else
 		while (1)
 		{
 
-
 			  getEncoderCount();
 			  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
 			  {
@@ -116,9 +112,7 @@ else
 				  pwm_Commute(encoder_commutation_pos);
 				//  usart_sendStr("\n\r");
 			  }
-
 		}
-
     }
 	else
 	{
@@ -129,10 +123,8 @@ else
 				//dma transfer is complete
 				usart_send_stream();
 			}
-
 		}
 	}
-
 }
 
 

@@ -33,3 +33,16 @@
 Debug/
 output/
 _autosave*
+
+# Eclipse Files
+./Debug/
+./Release/
+.settings
+
+# KiCAD Backup and temp files
+*.bak
+*-cache.lib
+*.kicad_pcb.bak
+*.csv
+*.xml
+
