@@ -1,5 +1,3 @@
-# WARNING - THIS IS A FORK OF THE bldc-drive
-
 # bldc-drive
 
 This is a project developing a simple BLDC servo controller. It is based on an STM32F103 microcontroller.
