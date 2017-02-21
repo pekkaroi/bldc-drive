@@ -215,58 +215,37 @@ void parseUsart()
 
 	}
 }
-void USART3_IRQHandler(void)
+void serialInterrupt()
 {
 	char in;
-    if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
-    {
-    	in = (char)USART_ReceiveData(USART3);
-    	recvbuffer[recvctr] = in;
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)
+	{
+		in = (char)USART_ReceiveData(USART3);
+		recvbuffer[recvctr] = in;
 
-    	if(in=='\r')
-    	{
-    		parseUsart();
-    		recvctr=0;
+		if(in=='\r')
+		{
+			parseUsart();
+			recvctr=0;
 
-    	}
-    	else
-    	{
-			//USART_SendData(USART3, recvbuffer[recvctr]);
-			//while(USART_GetFlagStatus(USART3, USART_FLAG_TXE) == RESET)
-			//{
-
-			//}
-    		//any received character will stop the stream.
-    		serial_stream_enabled=0;
+		}
+		else
+		{
+			//any received character will stop the stream.
+			serial_stream_enabled=0;
 			recvctr++;
-    	}
+		}
 
-    }
-
+	}
 }
+void USART3_IRQHandler(void)
+{
+
+	serialInterrupt();
+}
+
 
 void USART1_IRQHandler(void)
 {
-	char in;
-    if(USART_GetITStatus(USART1, USART_IT_RXNE) != RESET)
-    {
-    	in = (char)USART_ReceiveData(USART1);
-    	recvbuffer[recvctr] = in;
-
-    	if(in=='\r')
-    	{
-    		parseUsart();
-    		recvctr=0;
-    	}
-    	else
-    	{
-			USART_SendData(USART1, recvbuffer[recvctr]);
-			while(USART_GetFlagStatus(USART1, USART_FLAG_TXE) == RESET)
-			{
-
-			}
-    	}
-    	recvctr++;
-    }
-
+	serialInterrupt();
 }

@@ -29,6 +29,7 @@
 #include "encoder.h"
 #include "configuration.h"
 #include "adc.h"
+#include "pid.h"
 
 #define FALSE 0
 #define TRUE 1
@@ -59,33 +60,7 @@ static const uint8_t BLDC_BRIDGE_STATE_VORWARD[8][6] =   // Motor step
    { FALSE,FALSE, TRUE,FALSE, FALSE,TRUE },
    { FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  // 0 //111
 };
-/*
-static const uint8_t BLDC_BRIDGE_STATE_VORWARD2[8][6] =   // Motor step
-{
-{ FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  //  //000
-{ FALSE,TRUE, FALSE,FALSE, TRUE,FALSE },
-{ FALSE,FALSE, TRUE,FALSE, FALSE,TRUE },
-{ FALSE,TRUE, TRUE,FALSE, FALSE,FALSE },
-{ TRUE,FALSE, FALSE,TRUE, FALSE,FALSE },
-{ FALSE,FALSE, FALSE,TRUE, TRUE,FALSE },
-{ TRUE,FALSE, FALSE,FALSE, FALSE,TRUE },
 
-{ FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  // 0 //111
-};
-
-static const uint8_t BLDC_BRIDGE_STATE_BACKWARD2[8][6] =   // Motor step
-{
-{ FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  //  //000
-{ FALSE,TRUE, TRUE,FALSE, FALSE,FALSE },
-{ TRUE,FALSE, FALSE,FALSE, FALSE,TRUE },
-{ FALSE,FALSE, TRUE,FALSE, FALSE,TRUE },
-{ FALSE,FALSE, FALSE,TRUE, TRUE,FALSE },
-{ FALSE,TRUE, FALSE,FALSE, TRUE,FALSE },
-{ TRUE,FALSE, FALSE,TRUE, FALSE,FALSE },
-
-{ FALSE,FALSE   ,   FALSE,FALSE   ,  FALSE,FALSE },  // 0 //111
-};
-*/
 void UpdatePWMChannels(uint8_t BL1,uint8_t BL2,uint8_t BL3,uint8_t BH1,uint8_t BH2,uint8_t BH3);
 void initPWM()
 
@@ -187,11 +162,22 @@ void TIM1_CC_IRQHandler(void)
 
 
 
-
-void pwm_setDutyCycle(uint16_t duty)
+#ifndef SINUSOID_DRIVE
+void pwm_setDutyCycle()
 {
+	static uint8_t prevdir=0;
 	if(!motor_running)
 		return;
+
+
+	if(dir!=prevdir)
+	{
+
+		pwm_InitialBLDCCommutation();
+	}
+	prevdir=dir;
+
+
 	uint16_t d = duty;
 	if(d>MAX_DUTY) d = MAX_DUTY; //this is absolute MAX
 	if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
@@ -201,12 +187,47 @@ void pwm_setDutyCycle(uint16_t duty)
 	TIM1->CCR4 = d>>1; //get the ADC conversion on the half duty cycle.
 
 }
+#else
+void pwm_setDutyCycle()
+{
+	if(!motor_running)
+		return;
+	uint16_t pos[3];
+	pos[0] = getCommutationPos(0);
+	pos[1] = getCommutationPos(1);
+	pos[2] = getCommutationPos(2);
+
+	uint16_t d = duty;
+	if(d>MAX_DUTY) d = MAX_DUTY; //this is absolute MAX
+	if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
+	TIM1->CCR1 = (int32_t)sine_table[pos[0]]*d/SINE_TABLE_MAX+ZERO_DUTY;
+	TIM1->CCR2 = (int32_t)sine_table[pos[1]]*d/SINE_TABLE_MAX+ZERO_DUTY;
+	TIM1->CCR3 = (int32_t)sine_table[pos[2]]*d/SINE_TABLE_MAX+ZERO_DUTY;
+	TIM1->CCR4 = d>>1; //get the ADC conversion on the half duty cycle.
+
+}
+#endif
+
 void pwm_motorStart()
 {
 	motor_running=1;
-
+#ifndef SINUSOID_DRIVE
 	pwm_InitialBLDCCommutation();
-	TIM_ITConfig(TIM4, TIM_IT_CC1 | TIM_IT_CC2, ENABLE); //enable HALL interrupts again
+	TIM_ITConfig(TIM4, TIM_IT_CC1 | TIM_IT_CC2, ENABLE); //enable HALL interrupts
+#else
+	//on sinusoid drive, all channels enabled at once
+	TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_PWM1);
+	TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
+	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Enable);
+
+	TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_PWM1);
+	TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
+	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Enable);
+
+	TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_PWM1);
+	TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
+	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Enable);
+#endif
 
 }
 void pwm_motorStop()
@@ -222,9 +243,13 @@ void pwm_motorStop()
 	TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
 	TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
+#ifndef SINUSOID_DRIVE
 	TIM_ITConfig(TIM4, TIM_IT_CC1 | TIM_IT_CC2, DISABLE); //disable HALL interrupts, no commutation!
+#endif
 
 }
+
+#ifndef SINUSOID_DRIVE
 void pwm_InitialBLDCCommutation()
 {
 	uint16_t newhallpos;
@@ -280,8 +305,7 @@ void pwm_Commute(uint8_t comm_pos)
 void UpdatePWMChannels(uint8_t BL1,uint8_t BL2,uint8_t BL3,uint8_t BH1,uint8_t BH2,uint8_t BH3)
 {
 //THIS NEEDS OPTIMIZATION!
-	#define DRIVEMODE 1
-#if DRIVEMODE==1
+
 	// **** this is with active freewheeling ****
 		  // Bridge FETs for Motor Phase U
 		  if (BH1) {
@@ -353,75 +377,8 @@ void UpdatePWMChannels(uint8_t BL1,uint8_t BL2,uint8_t BL3,uint8_t BH1,uint8_t B
 			}
 		  }
 
-#else
 
-		uint16_t positive_oc_mode = TIM_OCMode_PWM1;
-		uint16_t negative_oc_mode = TIM_OCMode_Inactive;
-
-		uint16_t positive_highside = TIM_CCx_Enable;
-		uint16_t positive_lowside = TIM_CCxN_Enable;
-
-		uint16_t negative_highside = TIM_CCx_Enable;
-		uint16_t negative_lowside = TIM_CCxN_Enable;
-		 if(!BH1&&!BL1) //0
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, TIM_CCxN_Disable);
-		 }
-		 else if(BH1) //+
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, positive_lowside);
-		 }
-		 else if(BL1) //-
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_1, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_1, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_1, negative_lowside);
-		 }
-
-		 //CHANNEL2
-		 if(!BH2&&!BL2) //0
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, TIM_CCxN_Disable);
-		 }
-		 else if(BH2) //+
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, positive_lowside);
-		 }
-		 else if(BL2) //-
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_2, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_2, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_2, negative_lowside);
-		 }
-
-		 //CHANNEL3
-		 if(!BH3&&!BL3) //0
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, TIM_OCMode_Inactive);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, TIM_CCx_Enable);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, TIM_CCxN_Disable);
-		 }
-		 else if(BH3) //+
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, positive_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, positive_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, positive_lowside);
-		 }
-		 else if(BL3) //-
-		 {
-			TIM_SelectOCxM(TIM1, TIM_Channel_3, negative_oc_mode);
-			TIM_CCxCmd(TIM1, TIM_Channel_3, negative_highside);
-			TIM_CCxNCmd(TIM1, TIM_Channel_3, negative_lowside);
-		 }
-#endif
 
 }
+#endif
 

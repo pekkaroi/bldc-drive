@@ -33,16 +33,17 @@ uint16_t findNextEncoderCommutationPos(int8_t dir);
 
 extern volatile servoConfig s;
 
-extern int32_t encoder_count;
+extern volatile int32_t encoder_count;
 
 extern uint16_t encoder_shaft_pos; //this is the shaft position as encoder counts
-extern uint16_t encoder_full_rounds;
 extern uint16_t encoder_commutation_pos; //this is shaft position from the beginning of current commuatiton sequence.
 
+#ifndef SINUSOID_DRIVE
 extern uint8_t encoder_commutation_table[4096]; //20 poles max //8096 PPR max at the moment.
-
-extern uint16_t encoder_next_commutation_cnt_cw;
-extern uint16_t encoder_next_commutation_cnt_ccw;
+#else
+#define SINE_TABLE_MAX 32767
+extern int16_t sine_table[4096]; //20 poles max //8096 PPR max at the moment.
+#endif
 
 
 

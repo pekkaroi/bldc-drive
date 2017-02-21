@@ -55,17 +55,17 @@ void getConfig()
 	uint16_t *ptr;
 	EE_Init();
 	EE_ReadVariable(EADDR_IS_INITIALIZED,&i);
-	if(i != 0x5252)
+	if(i != 0x5254)
 	{
 		//empty or corrupted EEPROM detected: write default config
 		//EE_Format();
-		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5252);
-		s.commutationMethod = commutationMethod_HALL;
-		s.inputMethod = inputMethod_stepDir;
+		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5254);
+		s.commutationMethod = commutationMethod_Encoder;
+		s.inputMethod = inputMethod_pwmVelocity;
 		s.encoder_PPR = 4000;
 		s.encoder_poles = 4;
-		s.encoder_counts_per_step = 10;
-		s.invert_dirstepena = 0;
+		s.encoder_counts_per_step = 1;
+		s.invert_dirstepena = 7;
 		s.max_error = 1000;
 		s.pid_Kp = 10;
 		s.pid_Ki = 0;
@@ -74,6 +74,7 @@ void getConfig()
 		s.pid_FF2 = 0;
 		s.max_current = 1000;
 		s.usart_baud = 1152;
+		s.commutation_offset=0;
 		writeConfig();
 		return;
 
@@ -179,6 +180,13 @@ void setConfig(char* param, int16_t value)
 
 		//usart_sendStr("SET OK\n");
 	}
+	if (strstr( param, "commutation_offset" ) != NULL)
+	{
+		   s.commutation_offset = (uint16_t)value;
+
+		   //usart_sendStr("SET OK\n");
+	}
+
 }
 void printConfiguration()
 {
@@ -211,6 +219,9 @@ void printConfiguration()
 	usart_sendStr(buf);
 	sprintf(buf,"max_current: %d\n",s.max_current);
 	usart_sendStr(buf);
+    sprintf(buf,"commutation_offset: %d\n",s.commutation_offset);
+    usart_sendStr(buf);
+
 
 
 }

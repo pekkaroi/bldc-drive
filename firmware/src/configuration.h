@@ -23,6 +23,20 @@
 
 #include <stdint.h>
 
+
+/*
+ * functionality from sinusoid_drive branch has been merged to master brach 13.2.2017. define SINUSOID_DRIVE to
+ * enable sinusoid commutation, comment it out to define trapezoidal commutation.
+ *
+ */
+
+#define SINUSOID_DRIVE 1
+
+
+
+
+
+
 #define inputMethod_stepDir 1
 #define inputMethod_pwmVelocity 2
 #define commutationMethod_HALL 1
@@ -46,6 +60,7 @@ typedef struct  {
 	volatile int16_t pid_Kd;
 	volatile int16_t pid_FF1;
 	volatile int16_t pid_FF2;
+	volatile int16_t commutation_offset;
 
 	volatile uint16_t usart_baud; //baud divided by 100 to fit to 16 bits! for example 115200 => 1152
 

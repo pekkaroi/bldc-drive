@@ -32,10 +32,12 @@ extern volatile servoConfig s;
 extern int32_t position_error;
 extern int32_t pid_requested_position;
 extern int32_t pid_last_requested_position;
+extern uint32_t pid_max_pos_error;
 extern int32_t pid_last_requested_position_delta;
 extern volatile int32_t pid_integrated_error;
 extern int32_t pid_prev_position_error;
 extern int32_t max_error; //statistics
+extern volatile uint16_t duty;
 
 
 #endif /* PID_H_ */

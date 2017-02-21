@@ -36,6 +36,7 @@ volatile int32_t pid_integrated_error;
 int32_t pid_prev_position_error;
 int32_t max_error; //statistics
 
+volatile uint16_t duty;
 
 void initPid()
 {
@@ -72,7 +73,7 @@ void updatePid()
 	int32_t position_delta;
 	int32_t position_delta_delta;
 	static uint8_t prevdir;
-	getEncoderCount();
+//	getEncoderCount(); this is dangerous to call from interrupt
 	if (!motor_running)
 	{
 		pid_integrated_error=0;
@@ -142,12 +143,8 @@ void updatePid()
 		dir=1;
 
 	}
-	pwm_setDutyCycle(abs(output));
-	if(dir!=prevdir)
-	{
-		pwm_InitialBLDCCommutation();
-		prevdir=dir;
-	}
+
+	duty = abs(output);
 
 
 

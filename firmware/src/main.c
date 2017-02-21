@@ -45,7 +45,6 @@ volatile servoConfig s;
 
 
 
-
 int
 main()
 {
@@ -57,12 +56,17 @@ main()
 
 	FLASH_Unlock();
 	getConfig();
+#ifdef SINUSOID_DRIVE
+	//sinusoid always needs encoder.
+	s.commutationMethod = commutationMethod_Encoder;
+#endif
 
 	initUSART(s.usart_baud);
 	printConfiguration();
 	systickInit(1000);
 	initPWM();
 	initADC();
+
 	if( s.commutationMethod == commutationMethod_HALL)
 	{
 		initHALL();
@@ -87,7 +91,7 @@ main()
 	}
 	initLeds();
 	POWER_LED_ON;
-//	errorInCommutation=1;
+
 	uint8_t ena;
 	//check if ENA is on already at start. If it is, start motor.
 if(!is_ena_inverted)
@@ -101,20 +105,30 @@ else
 		ENABLE_LED_ON;
 	}
 	//two different types of main loops depending on commutation method
-	if(s.commutationMethod == commutationMethod_Encoder)
+	if(s.commutationMethod == commutationMethod_Encoder || s.inputMethod == inputMethod_stepDir)
 	{
 		while (1)
 		{
 
 
 			  getEncoderCount();
+			  pwm_setDutyCycle();
+
+#ifndef SINUSOID_DRIVE
+			  //check commutation position for trapezoid commutation if done by encoder
 			  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
 			  {
-				  //usart_sendStr("commutation to ");
-				  //usart_sendChar(encoder_commutation_table[encoder_shaft_pos]+48);
+
 				  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
 				  pwm_Commute(encoder_commutation_pos);
-				//  usart_sendStr("\n\r");
+
+			  }
+#endif
+
+			  if(serial_stream_enabled && DMA_GetFlagStatus(DMA1_FLAG_TC2) == SET)
+			  {
+				  //dma transfer is complete
+				  usart_send_stream();
 			  }
 
 		}
@@ -124,6 +138,9 @@ else
 	{
 		while(1)
 		{
+			//commutation handled by HALL sensor interrupts in this case
+			pwm_setDutyCycle();
+
 			if(serial_stream_enabled && DMA_GetFlagStatus(DMA1_FLAG_TC2) == SET)
 			{
 				//dma transfer is complete

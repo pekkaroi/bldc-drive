@@ -107,6 +107,7 @@ void TIM4_IRQHandler(void) {
   }
   else if (TIM_GetITStatus(TIM4, TIM_IT_CC2) != RESET)
   {
+#ifndef SINUSOID_DRIVE
     TIM_ClearITPendingBit(TIM4, TIM_IT_CC2);
 
 
@@ -120,5 +121,7 @@ void TIM4_IRQHandler(void) {
 
   } else {
     ;
+#endif
   }
+
 }
