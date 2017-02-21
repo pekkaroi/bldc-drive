@@ -44,11 +44,7 @@ volatile uint8_t dir;
 volatile servoConfig s;
 
 
-
-int
-main()
-{
-
+int main() {
 
 	motor_running=0;
 	updateCtr=0;
@@ -110,7 +106,6 @@ else
 		while (1)
 		{
 
-
 			  getEncoderCount();
 			  pwm_setDutyCycle();
 
@@ -130,9 +125,7 @@ else
 				  //dma transfer is complete
 				  usart_send_stream();
 			  }
-
 		}
-
     }
 	else
 	{
@@ -146,10 +139,6 @@ else
 				//dma transfer is complete
 				usart_send_stream();
 			}
-
 		}
 	}
-
 }
-
-
