@@ -161,7 +161,14 @@ void usart_send_stream()
 //	while (DMA_GetFlagStatus(DMA1_FLAG_TC2) == RESET)
 //	{
 //	}
-	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d;%d\r",(int)hallpos,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1,pid_integrated_error);
+	uint16_t hall;
+	if (s.commutationMethod == commutationMethod_Encoder)
+		hall = encoder_commutation_pos;
+	else
+	{
+		hall = hallpos;
+	}
+	uint16_t len = sprintf(txbuffer, "STR:%d;%d;%d;%d;%d;%d;%d;%d\r",(int)hall,(int)encoder_count,(int)pid_requested_position,(int)pid_last_requested_position_delta,(int)position_error,(int)ADC_value,(int)TIM1->CCR1,(int)pid_integrated_error);
 	usart_startDMA(len);
 }
 void parseUsart()

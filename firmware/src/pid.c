@@ -27,6 +27,7 @@
 #include "hall.h"
 #include "encoder.h"
 #include "input.h"
+#include "configuration.h"
 
 int32_t position_error;
 int32_t pid_requested_position;
@@ -34,7 +35,7 @@ int32_t pid_last_requested_position;
 int32_t pid_last_requested_position_delta;
 volatile int32_t pid_integrated_error;
 int32_t pid_prev_position_error;
-int32_t max_error; //statistics
+uint32_t max_error; //statistics
 
 volatile uint16_t duty;
 
@@ -50,7 +51,7 @@ void initPid()
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseStructure;
 	TIM_TimeBaseStructure.TIM_Prescaler = 72; //1MHz counter
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-	TIM_TimeBaseStructure.TIM_Period = 250; //4kHz update interval
+	TIM_TimeBaseStructure.TIM_Period = PID_TIM_PERIOD; //4kHz update interval
 	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
 	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
@@ -72,8 +73,7 @@ void updatePid()
 	uint32_t abs_position_error;
 	int32_t position_delta;
 	int32_t position_delta_delta;
-	static uint8_t prevdir;
-//	getEncoderCount(); this is dangerous to call from interrupt
+	//getEncoderCount(); //this is dangerous to call from interrupt
 	if (!motor_running)
 	{
 		pid_integrated_error=0;
@@ -93,10 +93,20 @@ void updatePid()
 	pid_last_requested_position = pid_requested_position;
 	pid_last_requested_position_delta = position_delta;
 
-	if(abs(position_error)> max_error)
-			max_error = abs(position_error);
-
 	abs_position_error = abs(position_error);
+	if(abs_position_error < s.pid_deadband)
+	{
+		position_error=0;
+	}
+	else if (position_error > 0)
+		position_error -= s.pid_deadband;
+	else
+		position_error += s.pid_deadband;
+
+	if(abs_position_error > max_error)
+			max_error = abs_position_error;
+
+
 
 	if (abs_position_error > s.max_error)
 	{
@@ -143,9 +153,9 @@ void updatePid()
 		dir=1;
 
 	}
-
 	duty = abs(output);
 
+	pwm_setDutyCycle();
 
 
 

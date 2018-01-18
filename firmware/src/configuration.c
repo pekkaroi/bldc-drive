@@ -61,9 +61,9 @@ void getConfig()
 		//EE_Format();
 		EE_WriteVariable(EADDR_IS_INITIALIZED, 0x5254);
 		s.commutationMethod = commutationMethod_Encoder;
-		s.inputMethod = inputMethod_pwmVelocity;
-		s.encoder_PPR = 4000;
-		s.encoder_poles = 4;
+		s.inputMethod = inputMethod_stepDir;
+		s.encoder_PPR = 2400;
+		s.encoder_poles = 7;
 		s.encoder_counts_per_step = 1;
 		s.invert_dirstepena = 7;
 		s.max_error = 1000;
@@ -72,6 +72,7 @@ void getConfig()
 		s.pid_Kd = 0;
 		s.pid_FF1 = 0;
 		s.pid_FF2 = 0;
+		s.pid_deadband = 0;
 		s.max_current = 1000;
 		s.usart_baud = 1152;
 		s.commutation_offset=0;
@@ -156,6 +157,12 @@ void setConfig(char* param, int16_t value)
 
 		//usart_sendStr("SET OK\n");
 	}
+	if (strstr( param, "pid_deadband" ) != NULL)
+	{
+		s.pid_deadband = (int16_t)value;
+
+		//usart_sendStr("SET OK\n");
+	}
 	if (strstr( param, "usart_baud" ) != NULL)
 	{
 		s.usart_baud = (uint16_t)value;
@@ -214,6 +221,8 @@ void printConfiguration()
 	sprintf(buf,"pid_FF1: %d\n",s.pid_FF1);
 	usart_sendStr(buf);
 	sprintf(buf,"pid_FF2: %d\n",s.pid_FF2);
+	usart_sendStr(buf);
+	sprintf(buf,"pid_deadband: %d\n",s.pid_deadband);
 	usart_sendStr(buf);
 	sprintf(buf,"usart_baud: %d\n",s.usart_baud);
 	usart_sendStr(buf);

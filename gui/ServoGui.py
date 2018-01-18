@@ -1,23 +1,21 @@
 #!/usr/bin/python
-from PIL import Image, ImageTk
-from Tkinter import Tk, Label, BOTH, Y,LEFT,RIGHT,X,RAISED,SUNKEN,W,StringVar,END, DISABLED, NORMAL, TOP
-import tkFileDialog as fD
-from ttk import Frame, Style, Button, Entry, OptionMenu
+
+from Tkinter import Tk, Label, BOTH, Y, LEFT, RIGHT, X, RAISED, SUNKEN, StringVar, END, DISABLED, NORMAL, TOP
+
+from ttk import Frame, Button, Entry, OptionMenu
 import serial
 import serial.tools.list_ports
 import threading
 import Queue
 import time
 import matplotlib
-import numpy
-
-matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
 # implement the default mpl key bindings
 from matplotlib.backend_bases import key_press_handler
-
-
 from matplotlib.figure import Figure
+
+matplotlib.use('TkAgg')
+
 drivesettings = [
     "commutationMethod",
     "inputMethod",
@@ -29,11 +27,14 @@ drivesettings = [
     "pid_Kd",
     "pid_FF1",
     "pid_FF2",
+    "pid_deadband",
     "usart_baud",
     "max_current",
     "max_error",
-    "invert_dirstepena"
-    ]
+    "invert_dirstepena",
+    "commutation_offset"
+]
+
 
 class SerialThread(threading.Thread):
     def __init__(self, queue, writequeue, ser):
@@ -42,8 +43,10 @@ class SerialThread(threading.Thread):
         self.queue = queue
         self.writequeue = writequeue
         self.buffer = ""
+
     def stop(self):
         self.running = False
+
     def run(self):
         self.running = True
         while self.running:
@@ -91,8 +94,8 @@ class topFrame(Frame):
                                 width=15,
                                 validate="focusout",
                                 validatecommand=self.baudValidate)
-        self.baud_entry.pack(side=LEFT, expand = True)
-        self.baud_entry.insert(0,"115200")
+        self.baud_entry.pack(side=LEFT, expand=True)
+        self.baud_entry.insert(0, "115200")
 
         Button(settingFrame, text="Open Port", command=self.openPort). pack(fill=X)
         Button(settingFrame, text="Close Port", command=self.closePort). pack(fill=X)
@@ -134,16 +137,17 @@ class topFrame(Frame):
 
         Label(settingFrame, width=50, textvariable=self.laststrm, bg="green", fg="black").pack(fill=X)
 
-        #MatplotLib stuff
+        # MatplotLib stuff
 
         f = Figure(figsize=(5, 4), dpi=100)
-        self.a = f.add_subplot(311)
+        self.a = f.add_subplot(411)
         self.a.set_title("Requested and actual position")
-        self.b = f.add_subplot(312)
+        self.b = f.add_subplot(412)
         self.b.set_title("Error")
-        self.c = f.add_subplot(313)
+        self.c = f.add_subplot(413)
         self.c.set_title("Current meas ADC value")
-
+        self.d = f.add_subplot(414)
+        self.d.set_title("HALL")
         self.canvas = FigureCanvasTkAgg(f, master=self)
         self.canvas.show()
         self.canvas.get_tk_widget().pack(side=TOP, fill=BOTH, expand=1)
@@ -152,22 +156,22 @@ class topFrame(Frame):
         toolbar.update()
         self.canvas._tkcanvas.pack(side=TOP, fill=BOTH, expand=1)
 
-        self.hall=[]
-        self.encoder_count=[]
-        self.pos_error=[]
-        self.requested_position=[]
-        self.requested_delta=[]
-        self.adc_value=[]
-        self.pid_output=[]
+        self.hall = []
+        self.encoder_count = []
+        self.pos_error = []
+        self.requested_position = []
+        self.requested_delta = []
+        self.adc_value = []
+        self.pid_output = []
         self.a.set_autoscaley_on(True)
 
-
-        self.encoder_line, = self.a.plot([],[])
-        self.error_line, = self.b.plot([],[])
-        self.reqpos_line, = self.a.plot([],[])
-        self.ADC_line, = self.c.plot([],[])
+        self.encoder_line, = self.a.plot([], [])
+        self.error_line, = self.d.plot([], [])
+        self.reqpos_line, = self.a.plot([], [])
+        self.ADC_line, = self.c.plot([], [])
+        self.hall_line, = self.d.plot([], [])
+        self.pwm_line, = self.b.plot([], [])
         self.updateCanvas()
-
 
     def baudValidate(self):
         sVal = self.baud_entry.get()
@@ -218,17 +222,19 @@ class topFrame(Frame):
 
     def stopStream(self):
         self.writequeue.put(b"STREAM DIE \r")
+
     def getConfig(self):
         self.writequeue.put(b"GET\r")
+
     def saveConfig(self):
         self.writequeue.put(b"SAVE \r")
+
     def sendConfig(self):
         for setting in drivesettings:
-            dataToSend = b"SET "+setting+" "+self.driveSettingsEntries[drivesettings.index(setting)].get()+"\r"
+            dataToSend = b"SET " + setting + " " + self.driveSettingsEntries[drivesettings.index(setting)].get() + "\r"
             print dataToSend
             self.writequeue.put(dataToSend)
             time.sleep(0.2)
-
 
     def getComPorts(self):
         ports = serial.tools.list_ports.comports()
@@ -236,20 +242,22 @@ class topFrame(Frame):
         for port in ports:
             portNames.append(port[0])
         return portNames
-    def handleLine(self,line):
+
+    def handleLine(self, line):
         line = line.replace(" ", "")
         line = line.replace("/n", "")
         line = line.replace("/r", "")
         parts = line.split(":")
-        if len(parts)>1:
+        if len(parts) > 1:
             if parts[0] == "STR":
                 self.handleStr(parts[1])
                 return
             if parts[0] in drivesettings:
                 self.driveSettingsEntries[drivesettings.index(parts[0])].delete(0, END)
                 self.driveSettingsEntries[drivesettings.index(parts[0])].insert(0, parts[1])
-    def handleStr(self,strm):
-        #format of the stream line: STR:hall;count;requestedPosition;requestedDelta;error
+
+    def handleStr(self, strm):
+        # format of the stream line: STR:hall;count;requestedPosition;requestedDelta;error
         parts = strm.split(";")
 
         self.laststrm.set(strm)
@@ -277,7 +285,7 @@ class topFrame(Frame):
         if len(self.adc_value) > 5000:
             self.adc_value.pop(0)
 
-        self.pid_output.append(parts[5])
+        self.pid_output.append(parts[6])
         if len(self.pid_output) > 5000:
             self.pid_output.pop(0)
 
@@ -291,16 +299,21 @@ class topFrame(Frame):
         self.reqpos_line.set_ydata(self.requested_position)
         self.ADC_line.set_xdata(range(len(self.adc_value)))
         self.ADC_line.set_ydata(self.adc_value)
+        self.hall_line.set_xdata(range(len(self.hall)))
+        self.hall_line.set_ydata(self.hall)
+        self.pwm_line.set_xdata(range(len(self.pid_output)))
+        self.pwm_line.set_ydata(self.pid_output)
+
         self.a.relim()
         self.a.autoscale_view()
         self.b.relim()
         self.b.autoscale_view()
         self.c.relim()
         self.c.autoscale_view()
+        self.d.relim()
+        self.d.autoscale_view()
         self.canvas.draw()
         self.after(100, self.updateCanvas)
-
-
 
 
 def main():
@@ -309,6 +322,6 @@ def main():
     app = topFrame(root)
     root.mainloop()
 
+
 if __name__ == '__main__':
     main()
-

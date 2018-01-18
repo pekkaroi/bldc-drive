@@ -32,7 +32,22 @@
 
 #define SINUSOID_DRIVE 1
 
+//PID timer period. Counter runs at 1MHz, so f_pid = 1e6/period. 250=4kHz, 125=8Khz, 63=16kHz..
+#define PID_TIM_PERIOD 40
 
+//BLDC_CHOPPER_PERIOD defines the PWM clock frequency. Timer runs at 72MHz (Fcpu), so Fpwm = 72e6/period
+//4000 = 18kHz
+//2000 = 36kHz
+#define BLDC_CHOPPER_PERIOD 2000
+#ifndef SINUSOID_DRIVE
+#define MAX_DUTY BLDC_CHOPPER_PERIOD-50 //100% duty not allowed to allow recharge of high side gate drivers
+#else
+#define ZERO_DUTY BLDC_CHOPPER_PERIOD/2
+#define MAX_DUTY BLDC_CHOPPER_PERIOD/2-50 //100% duty not allowed to allow recharge of high side gate drivers
+#endif
+
+#define BLDC_NOL 7//Non-OverLapping, number of clock cycles
+#define BLDC_DELAY 100 //Commutation delay. 1= no delay, 2000=7ms.
 
 
 
@@ -60,6 +75,7 @@ typedef struct  {
 	volatile int16_t pid_Kd;
 	volatile int16_t pid_FF1;
 	volatile int16_t pid_FF2;
+	volatile uint16_t pid_deadband;
 	volatile int16_t commutation_offset;
 
 	volatile uint16_t usart_baud; //baud divided by 100 to fit to 16 bits! for example 115200 => 1152

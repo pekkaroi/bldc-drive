@@ -179,6 +179,7 @@ void pwm_setDutyCycle()
 
 
 	uint16_t d = duty;
+
 	if(d>MAX_DUTY) d = MAX_DUTY; //this is absolute MAX
 	if(d>max_duty) d = max_duty; //this is maximum set by ADC current limiting
 	TIM1->CCR1 = d;

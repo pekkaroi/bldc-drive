@@ -243,7 +243,7 @@ void getEncoderCount()
 	encoder_count += delta;
 
 	//encoder_full_rounds = encoder_count / s.encoder_PPR;
-	int16_t shaft_pos_tmp = encoder_count % s.encoder_PPR;
+	int16_t shaft_pos_tmp = (encoder_count+ s.commutation_offset ) % s.encoder_PPR;
 	if(shaft_pos_tmp < 0)
 		encoder_shaft_pos = s.encoder_PPR + shaft_pos_tmp;
 	else
@@ -263,7 +263,7 @@ uint16_t getCommutationPos(uint8_t phase)
 	int32_t tmp;
 	if(dir)
 	{
-		tmp = (encoder_commutation_pos - commutation_length/4 + commutation_length*phase/3 + s.commutation_offset);
+		tmp = (encoder_commutation_pos - commutation_length/4 + commutation_length*phase/3);
 		if (tmp<0)
 		{
 			tmp+=commutation_length;
@@ -273,7 +273,7 @@ uint16_t getCommutationPos(uint8_t phase)
 	}
 	else
 	{
-		tmp= (encoder_commutation_pos + commutation_length/4 + commutation_length*phase/3 + s.commutation_offset);
+		tmp= (encoder_commutation_pos + commutation_length/4 + commutation_length*phase/3);
 		if (tmp<0)
 		{
 			tmp+=commutation_length;

@@ -282,9 +282,12 @@ void TIM3_IRQHandler(void) {
 	  DC=0;
 
 	//if(DC<BLDC_NOL*3) DC=BLDC_NOL*3;
+
 	duty = DC;
 	updateCtr=0;
-
+#ifndef SINUSOID_DRIVE
+	pwm_setDutyCycle();
+#endif
 	TIM_ClearITPendingBit(TIM3, TIM_IT_CC1);
 
   }

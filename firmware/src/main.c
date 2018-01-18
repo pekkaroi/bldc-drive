@@ -107,11 +107,15 @@ else
 		{
 
 			  getEncoderCount();
+#ifdef SINUSOID_DRIVE
 			  pwm_setDutyCycle();
+#endif
+
+
 
 #ifndef SINUSOID_DRIVE
 			  //check commutation position for trapezoid commutation if done by encoder
-			  if(encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
+			  if(s.commutationMethod == commutationMethod_Encoder && encoder_commutation_pos != encoder_commutation_table[encoder_shaft_pos])
 			  {
 
 				  encoder_commutation_pos = encoder_commutation_table[encoder_shaft_pos];
@@ -125,6 +129,7 @@ else
 				  //dma transfer is complete
 				  usart_send_stream();
 			  }
+
 		}
     }
 	else
